@@ -1,13 +1,16 @@
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'package:e_lib/book_detail_screen.dart';
 import 'package:e_lib/books_all_screen.dart';
+import 'package:e_lib/editProfile.dart';
 import 'package:e_lib/elib_home.dart';
 import 'package:e_lib/genre.dart';
 import 'package:e_lib/help_icons.dart';
+import 'package:e_lib/login.dart';
 import 'package:e_lib/my_book.dart';
 import 'package:e_lib/my_flutter_app_icons.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui' as ui;
+import 'package:lottie/lottie.dart';
 
 class Profile extends StatefulWidget {
   const Profile({super.key});
@@ -52,7 +55,7 @@ class _ProfileState extends State<Profile> {
       appBar: AppBar(
         backgroundColor: Color.fromARGB(255, 219, 254, 250),
         title: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Image.asset(
               'assets/logo/logo-transparent2.png',
@@ -61,10 +64,48 @@ class _ProfileState extends State<Profile> {
               alignment: Alignment.centerLeft,
             ),
             SizedBox(
-              width: 60,
+              width: 100,
             )
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => Login()));
+                },
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith(
+                    (states) {
+                      // If the button is pressed, return green, otherwise blue
+                      if (states.contains(MaterialState.pressed)) {
+                        return null;
+                      }
+                      return Color.fromARGB(255, 219, 254, 250);
+                    },
+                  ),
+                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                      side: BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
+                      borderRadius: BorderRadius.circular(40))),
+                  overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.pressed))
+                        return Color.fromARGB(255, 17, 106, 136); //<-- SEE HERE
+                      return Color.fromARGB(
+                          255, 219, 254, 250); // Defer to the widget's default.
+                    },
+                  ),
+                ),
+                child: Text(
+                  "Login",
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 0, 21, 44),
+                  ),
+                )),
+          )
+        ],
       ),
       drawer: Drawer(
         width: 250,
@@ -179,6 +220,30 @@ class _ProfileState extends State<Profile> {
                 ),
               ),
             ),
+            // Align(
+            //     alignment: Alignment(
+            //         -2.4, -1.2), // Adjust alignment to position vertically
+            //     child: Container(
+            //       width: 400,
+            //       height: 400,
+            //       child: Lottie.asset(
+            //         "assets/images/lotie3.json",
+            //         reverse: true,
+            //       ),
+            //     )),
+
+            // Align(
+            //     alignment: Alignment(
+            //         2.4, -1.2), // Adjust alignment to position vertically
+            //     child: Container(
+            //       width: 400,
+            //       height: 400,
+            //       child: Lottie.asset(
+            //         "assets/images/lotie3.json",
+            //         reverse: true,
+            //       ),
+            //     )),
+
             Positioned(
               top: 200,
               left: 50,
@@ -331,6 +396,36 @@ class _ProfileState extends State<Profile> {
                 ),
               ),
             ),
+            Align(
+                alignment: Alignment(
+                    1.0, -0.8), // Adjust alignment to position vertically
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  child: Lottie.asset("assets/images/lotie1.json"),
+                )),
+            // Align(
+            //     alignment: Alignment(
+            //         0.1, -0.7), // Adjust alignment to position vertically
+            //     child: Container(
+            //       width: 200,
+            //       height: 200,
+            //       child: Lottie.asset(
+            //         "assets/images/lotie2.json",
+            //         reverse: true,
+            //       ),
+            //     )),
+            Align(
+                alignment: Alignment(
+                    0, -1.17), // Adjust alignment to position vertically
+                child: Container(
+                  width: 200,
+                  height: 200,
+                  child: Lottie.asset(
+                    "assets/images/lotie4.json",
+                    reverse: true,
+                  ),
+                )),
             Positioned(
               top: 30,
               left: MediaQuery.of(context).size.width / 2 - 40,
@@ -357,7 +452,12 @@ class _ProfileState extends State<Profile> {
                 alignment: Alignment(
                     0, -0.48), // Adjust alignment to position vertically
                 child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => EditProfile()));
+                    },
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.resolveWith(
                         (states) {

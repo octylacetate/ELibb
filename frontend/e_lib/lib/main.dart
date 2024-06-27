@@ -1,5 +1,7 @@
+import 'package:e_lib/book_detail_screen.dart';
 import 'package:e_lib/elib_home.dart';
 import 'package:e_lib/login.dart';
+import 'package:e_lib/profile.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -13,7 +15,7 @@ class MainApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Login(),
+      home: BookDetail(),
     );
   }
 }

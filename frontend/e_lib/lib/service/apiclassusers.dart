@@ -20,7 +20,7 @@ class ApiService {
 
   Future<Map<String, dynamic>> registerUser(
       String username, String email, String password) async {
-    var baseUrl = 'http://localhost:8000/api/v1/user/';
+    var baseUrl = 'http://localhost:8000/api/v1/users/';
     final url = Uri.parse('${baseUrl}register');
 
     _logger.d(

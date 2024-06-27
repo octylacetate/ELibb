@@ -5,6 +5,7 @@ import 'package:e_lib/help_icons.dart';
 import 'package:e_lib/my_book.dart';
 import 'package:e_lib/my_flutter_app_icons.dart';
 import 'package:e_lib/login.dart';
+import 'package:e_lib/profile.dart';
 
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -52,7 +53,7 @@ class _ELibState extends State<ELib> {
     MyFlutterApp.library_icon,
     MyFlutterApp.supervisor_account,
   ];
-  List screens = [ELib(), ELib(), Booksall(), ELib()];
+  List screens = [ELib(), ELib(), Booksall(), Profile()];
 
   List<Map<String, dynamic>> books = [];
 
@@ -77,6 +78,44 @@ class _ELibState extends State<ELib> {
             ),
           ],
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => Login()));
+                },
+                style: ButtonStyle(
+                  backgroundColor: MaterialStateProperty.resolveWith(
+                    (states) {
+                      // If the button is pressed, return green, otherwise blue
+                      if (states.contains(MaterialState.pressed)) {
+                        return null;
+                      }
+                      return Color.fromARGB(255, 219, 254, 250);
+                    },
+                  ),
+                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                      side: BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
+                      borderRadius: BorderRadius.circular(40))),
+                  overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                    (Set<MaterialState> states) {
+                      if (states.contains(MaterialState.pressed))
+                        return Color.fromARGB(255, 17, 106, 136); //<-- SEE HERE
+                      return Color.fromARGB(
+                          255, 219, 254, 250); // Defer to the widget's default.
+                    },
+                  ),
+                ),
+                child: Text(
+                  "Login",
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 0, 21, 44),
+                  ),
+                )),
+          )
+        ],
       ),
       drawer: Drawer(
         width: 250,

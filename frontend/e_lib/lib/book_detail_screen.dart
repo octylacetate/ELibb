@@ -1,5 +1,8 @@
 import 'package:e_lib/book_read_screen.dart';
 import 'package:flutter/material.dart';
+// import 'package:share/share.dart';
+import 'package:flutter/services.dart';
+import 'package:share_plus/share_plus.dart';
 
 class BookDetail extends StatefulWidget {
   const BookDetail({super.key});
@@ -17,7 +20,7 @@ class _BookDetailState extends State<BookDetail> {
     'cover_imgs/the-nature-of-wind-bookimg.jpg'
   ];
   final ScrollController _controller = ScrollController();
-
+  final String bookLink = 'https://example.com/book';
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -81,7 +84,16 @@ class _BookDetailState extends State<BookDetail> {
                               icon: Icon(Icons.favorite_border_outlined)),
                           Padding(padding: EdgeInsets.all(4)),
                           IconButton.outlined(
-                              onPressed: () {},
+                              onPressed: () {
+                                Share.share('Check out this book: $bookLink');
+                                Clipboard.setData(
+                                    ClipboardData(text: bookLink));
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                      content:
+                                          Text('Link copied to clipboard')),
+                                );
+                              },
                               icon: Icon(Icons.share_outlined)),
                         ],
                       ),
