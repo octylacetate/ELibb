@@ -149,19 +149,29 @@ class ApiService {
     }
   }
 
-  Future<void> updateAccountDetails(String fullName, String email) async {
+  Future<Map<String, dynamic>> updateAccountDetails(
+      String username,
+      String email,
+      String password,
+      String fullName,
+      String phoneNumber,
+      String bio) async {
     final url = Uri.parse('$baseUrl/update-account');
     final response = await http.post(
       url,
       headers: await _getHeaders(),
       body: jsonEncode({
-        'fullName': fullName,
+        'username': username,
         'email': email,
+        'password': password,
+        'fullName': fullName,
+        'phoneNumber': phoneNumber,
+        'bio': bio,
       }),
     );
 
     if (response.statusCode == 200) {
-      // Account details updated successfully
+      return jsonDecode(response.body);
     } else {
       throw Exception('Failed to update account details');
     }
