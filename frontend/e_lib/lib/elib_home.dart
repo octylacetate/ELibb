@@ -1,3 +1,4 @@
+import 'package:e_lib/service/apiclassusers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
@@ -25,6 +26,7 @@ class ELib extends StatefulWidget {
 }
 
 class _ELibState extends State<ELib> {
+  static final Logger _logger = Logger();
   CarouselController controller = CarouselController();
   bool isPressed = false;
   int currentIndex = 0;
@@ -64,6 +66,28 @@ class _ELibState extends State<ELib> {
     Booksall(),
     Profile(isLoggedIn: true, logout: () async {})
   ];
+  final ApiService apiService = ApiService();
+  Map<String, dynamic>? userData;
+  Future<void> fetchUserData() async {
+    try {
+      final response = await apiService.getCurrentUser();
+      setState(() {
+        userData = response['data'];
+      });
+      _logger.e("User Data: $userData");
+    } catch (error) {
+      // Handle error, e.g., show a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to load user data: $error'),
+      ));
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -152,7 +176,7 @@ class _ELibState extends State<ELib> {
             Padding(
               padding: const EdgeInsets.fromLTRB(0, 20, 0, 20),
               child: Column(
-                children: const [
+                children: [
                   CircleAvatar(
                     backgroundImage: AssetImage(
                       'assets/logo/cat.jpeg',
@@ -162,7 +186,9 @@ class _ELibState extends State<ELib> {
                   ),
                   Padding(padding: EdgeInsets.all(4)),
                   Text(
-                    "@username",
+                    userData != null
+                        ? "@${userData!['username']}"
+                        : "@username",
                     style: TextStyle(
                         color: Color.fromARGB(255, 0, 21, 44),
                         fontSize: 16,

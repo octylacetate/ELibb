@@ -8,9 +8,13 @@ import 'package:e_lib/help_icons.dart';
 import 'package:e_lib/login.dart';
 import 'package:e_lib/my_book.dart';
 import 'package:e_lib/my_flutter_app_icons.dart';
+import 'package:e_lib/service/apiclassusers.dart';
+import 'package:e_lib/widgets/myBooksLib.dart';
 import 'package:flutter/material.dart';
+import 'package:logger/logger.dart';
 import 'dart:ui' as ui;
 import 'package:lottie/lottie.dart';
+// Import the MyBooksLib class
 
 class Profile extends StatefulWidget {
   final bool isLoggedIn;
@@ -24,25 +28,8 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
-  List<String> genres = [
-    'All genres',
-    'Fantasy',
-    'Sci-fi',
-    'Mystery',
-    'Romance',
-    'Historical-fi',
-    'Thriller',
-    'Non-fiction',
-    'Young-adult',
-    'Children\'s-literature'
-  ];
-  List<String> books_imgs = [
-    'cover_imgs/mistborn-bookimg.jpeg',
-    'cover_imgs/lord-of-the-rings-bookimg.jpg',
-    'cover_imgs/A_Song_of_Ice_and_Fire-bookimg.jpg',
-    'cover_imgs/the-mistborn-bookimg.jpeg',
-    'cover_imgs/the-nature-of-wind-bookimg.jpg'
-  ];
+  final ApiService apiService = ApiService();
+  Map<String, dynamic>? userData;
   List screens = [
     ELib(isLoggedIn: true, logout: () async {}),
     ELib(isLoggedIn: true, logout: () async {}),
@@ -50,12 +37,35 @@ class _ProfileState extends State<Profile> {
     Profile(isLoggedIn: true, logout: () async {})
   ];
   int selectedIndex = 3;
+  bool showMyBooks = true;
   List<IconData> icons = [
     MyFlutterApp.home,
     MyFlutterApp.search,
     MyFlutterApp.library_icon,
     MyFlutterApp.supervisor_account,
   ];
+  static final Logger _logger = Logger();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      final response = await apiService.getCurrentUser();
+      setState(() {
+        userData = response['data'];
+      });
+      _logger.e("User Data: $userData");
+    } catch (error) {
+      // Handle error, e.g., show a snackbar
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to load user data: $error'),
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +73,7 @@ class _ProfileState extends State<Profile> {
     var screenHeight = MediaQuery.of(context).size.height;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 219, 254, 250),
+        backgroundColor: const Color.fromARGB(255, 219, 254, 250),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
@@ -133,11 +143,11 @@ class _ProfileState extends State<Profile> {
       ),
       drawer: Drawer(
         width: 250,
-        backgroundColor: Color.fromARGB(255, 219, 254, 250),
+        backgroundColor: const Color.fromARGB(255, 219, 254, 250),
         child: ListView(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20.0, 10, 10, 5),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(20.0, 10, 10, 5),
               child: Text("eLib",
                   textAlign: TextAlign.center,
                   style: TextStyle(
@@ -159,7 +169,9 @@ class _ProfileState extends State<Profile> {
                   ),
                   Padding(padding: EdgeInsets.all(4)),
                   Text(
-                    "@username",
+                    userData != null
+                        ? "@${userData!['username']}"
+                        : "@username",
                     style: TextStyle(
                         color: Color.fromARGB(255, 0, 21, 44),
                         fontSize: 16,
@@ -174,14 +186,13 @@ class _ProfileState extends State<Profile> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          ELib(isLoggedIn: true, logout: () async {}),
+                      builder: (context) => ELib(
+                          isLoggedIn: widget.isLoggedIn, logout: widget.logout),
                     ));
               },
               child: ListTile(
                 leading: Icon(MyFlutterApp.home),
                 title: Text("Home"),
-                // trailing: Text("+47"),
               ),
             ),
             InkWell(
@@ -192,7 +203,6 @@ class _ProfileState extends State<Profile> {
               child: ListTile(
                 leading: Icon(MyFlutterApp.search),
                 title: Text("Search"),
-                // trailing: Text("+47"),
               ),
             ),
             InkWell(
@@ -200,7 +210,6 @@ class _ProfileState extends State<Profile> {
               child: ListTile(
                 leading: Icon(MyFlutterApp.library_icon),
                 title: Text("Library"),
-                // trailing: Text("+47"),
               ),
             ),
             InkWell(
@@ -208,7 +217,6 @@ class _ProfileState extends State<Profile> {
               child: ListTile(
                 leading: Icon(MyFlutterApp.supervisor_account),
                 title: Text("Account"),
-                // trailing: Text("+47"),
               ),
             ),
             InkWell(
@@ -238,7 +246,7 @@ class _ProfileState extends State<Profile> {
             Container(
               width: 500,
               height: 300,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Color.fromARGB(255, 219, 254, 250),
                 borderRadius: BorderRadius.only(
                   topRight: Radius.circular(0.0),
@@ -248,204 +256,48 @@ class _ProfileState extends State<Profile> {
                 ),
               ),
             ),
-            // Align(
-            //     alignment: Alignment(
-            //         -2.4, -1.2), // Adjust alignment to position vertically
-            //     child: Container(
-            //       width: 400,
-            //       height: 400,
-            //       child: Lottie.asset(
-            //         "assets/images/lotie3.json",
-            //         reverse: true,
-            //       ),
-            //     )),
-
-            // Align(
-            //     alignment: Alignment(
-            //         2.4, -1.2), // Adjust alignment to position vertically
-            //     child: Container(
-            //       width: 400,
-            //       height: 400,
-            //       child: Lottie.asset(
-            //         "assets/images/lotie3.json",
-            //         reverse: true,
-            //       ),
-            //     )),
-
             Positioned(
               top: 200,
               left: 50,
               bottom: 0,
-              child: Container(
-                width: 400,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topRight: Radius.circular(40.0),
-                    bottomRight: Radius.circular(0.0),
-                    topLeft: Radius.circular(40.0),
-                    bottomLeft: Radius.circular(0.0),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                        "MyBooks.lib",
-                        style: TextStyle(
+              child: showMyBooks
+                  ? MyBooksLib(
+                      screenHeight: screenHeight,
+                      screenWidth: screenWidth,
+                    )
+                  : Container(
+                      width: 400,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(40.0),
+                          bottomRight: Radius.circular(0.0),
+                          topLeft: Radius.circular(40.0),
+                          bottomLeft: Radius.circular(0.0),
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(
+                          'Other Content',
+                          style: TextStyle(
                             color: Color.fromARGB(255, 0, 21, 44),
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            fontFamily: 'Sedan'),
+                            fontFamily: 'Sedan',
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(
-                      height: screenHeight * 0.47,
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        scrollDirection: Axis.vertical,
-                        itemCount: 10,
-
-                        // itemExtent: 200,
-                        itemBuilder: (context, index) {
-                          return Flexible(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                SizedBox(
-                                  height: 10,
-                                ),
-                                Card(
-                                  color: Color.fromARGB(255, 219, 254, 250),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: [
-                                      Container(
-                                        width: 100,
-                                        height: 100,
-                                        decoration: BoxDecoration(
-                                            image: DecorationImage(
-                                                image: AssetImage(
-                                                    'cover_imgs/mistborn-bookimg.jpeg'))),
-                                      ),
-                                      Column(
-                                        // mainAxisAlignment:
-                                        //     MainAxisAlignment.spaceEvenly,
-                                        children: [
-                                          Text(
-                                            "Name of the Wind",
-                                            textAlign: TextAlign.center,
-                                            style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.bold,
-                                                fontFamily: 'Sedan'),
-                                          ),
-                                          Text(
-                                            " Patrick Rothfuss",
-                                            style: TextStyle(
-                                                color: Color.fromARGB(
-                                                    255, 0, 21, 44),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.normal,
-                                                fontFamily: 'Dosis'),
-                                          ),
-                                          Text(
-                                            " Page No. 555",
-                                            style: TextStyle(
-                                                color: Color.fromARGB(
-                                                    255, 0, 21, 44),
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.normal,
-                                                fontFamily: 'Dosis'),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: ElevatedButton(
-                                              style: ButtonStyle(
-                                                alignment: Alignment.center,
-                                                shape: MaterialStateProperty
-                                                    .all(RoundedRectangleBorder(
-                                                        side: BorderSide(
-                                                            color:
-                                                                Color.fromARGB(
-                                                                    255,
-                                                                    0,
-                                                                    21,
-                                                                    44)),
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(40))),
-                                                backgroundColor:
-                                                    MaterialStateProperty
-                                                        .resolveWith(
-                                                  (states) {
-                                                    // If the button is pressed, return green, otherwise blue
-                                                    if (states.contains(
-                                                        MaterialState
-                                                            .pressed)) {
-                                                      return null;
-                                                    }
-                                                    return Color.fromARGB(
-                                                        255, 219, 254, 250);
-                                                  },
-                                                ),
-                                              ),
-                                              onPressed: () {},
-                                              child: SizedBox(
-                                                height: 20,
-                                                width: screenWidth * 0.4,
-                                                child: Text(
-                                                  "Read",
-                                                  textAlign: TextAlign.center,
-                                                  style: TextStyle(
-                                                      color: Colors.black,
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontFamily: 'Sedan'),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
             ),
             Align(
-                alignment: Alignment(
-                    1.0, -0.8), // Adjust alignment to position vertically
+                alignment: const Alignment(1.0, -0.8),
                 child: Container(
                   width: 200,
                   height: 200,
                   child: Lottie.asset("assets/images/lotie1.json"),
                 )),
-            // Align(
-            //     alignment: Alignment(
-            //         0.1, -0.7), // Adjust alignment to position vertically
-            //     child: Container(
-            //       width: 200,
-            //       height: 200,
-            //       child: Lottie.asset(
-            //         "assets/images/lotie2.json",
-            //         reverse: true,
-            //       ),
-            //     )),
             Align(
-                alignment: Alignment(
-                    0, -1.17), // Adjust alignment to position vertically
+                alignment: const Alignment(0, -1.17),
                 child: Container(
                   width: 200,
                   height: 200,
@@ -465,10 +317,9 @@ class _ProfileState extends State<Profile> {
               ),
             ),
             Align(
-              alignment:
-                  Alignment(0, -0.6), // Adjust alignment to position vertically
+              alignment: const Alignment(0, -0.52),
               child: Text(
-                "@useRname",
+                userData != null ? "@${userData!['username']}" : "@username",
                 style: TextStyle(
                     color: Color.fromARGB(255, 0, 21, 44),
                     fontSize: 22,
@@ -477,8 +328,7 @@ class _ProfileState extends State<Profile> {
               ),
             ),
             Align(
-                alignment: Alignment(
-                    0, -0.48), // Adjust alignment to position vertically
+                alignment: const Alignment(0, -0.40),
                 child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
@@ -489,7 +339,6 @@ class _ProfileState extends State<Profile> {
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.resolveWith(
                         (states) {
-                          // If the button is pressed, return green, otherwise blue
                           if (states.contains(MaterialState.pressed)) {
                             return null;
                           }
@@ -516,6 +365,43 @@ class _ProfileState extends State<Profile> {
                         color: Color.fromARGB(255, 0, 21, 44),
                       ),
                     ))),
+            Align(
+                alignment: const Alignment(-0.95, -0.40),
+                child: ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        showMyBooks = !showMyBooks;
+                      });
+                    },
+                    style: ButtonStyle(
+                      backgroundColor: MaterialStateProperty.resolveWith(
+                        (states) {
+                          if (states.contains(MaterialState.pressed)) {
+                            return null;
+                          }
+                          return Color.fromARGB(255, 219, 254, 250);
+                        },
+                      ),
+                      shape: MaterialStateProperty.all(RoundedRectangleBorder(
+                          side:
+                              BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
+                          borderRadius: BorderRadius.circular(40))),
+                      overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                        (Set<MaterialState> states) {
+                          if (states.contains(MaterialState.pressed))
+                            return Color.fromARGB(
+                                255, 17, 106, 136); //<-- SEE HERE
+                          return Color.fromARGB(255, 219, 254,
+                              250); // Defer to the widget's default.
+                        },
+                      ),
+                    ),
+                    child: Text(
+                      showMyBooks ? 'Show Other' : 'Show MyBooks.lib',
+                      style: TextStyle(
+                        color: Color.fromARGB(255, 0, 21, 44),
+                      ),
+                    ))),
           ],
         ),
       ),
@@ -526,7 +412,6 @@ class _ProfileState extends State<Profile> {
         child: const Icon(Icons.home, color: Color.fromARGB(255, 17, 106, 136)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
         backgroundColor: Color.fromARGB(255, 100, 204, 199),
-        //params
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar.builder(
@@ -537,14 +422,14 @@ class _ProfileState extends State<Profile> {
             onTap: () {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => screens[index]));
-              selectedIndex = index;
+              setState(() => selectedIndex = index);
             },
             child: Icon(
               icons[index],
               size: 24,
               color: isActive
                   ? Colors.amberAccent
-                  : Color.fromARGB(255, 100, 204, 199),
+                  : const Color.fromARGB(255, 100, 204, 199),
             ),
           );
         },
@@ -552,9 +437,8 @@ class _ProfileState extends State<Profile> {
         notchSmoothness: NotchSmoothness.verySmoothEdge,
         leftCornerRadius: 8,
         rightCornerRadius: 8,
-        backgroundColor: Color.fromARGB(255, 17, 106, 136),
+        backgroundColor: const Color.fromARGB(255, 17, 106, 136),
         onTap: (index) => setState(() => selectedIndex = index),
-        //other params
       ),
     );
   }

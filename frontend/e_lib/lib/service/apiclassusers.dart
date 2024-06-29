@@ -203,22 +203,18 @@ class ApiService {
 
   Future<Map<String, dynamic>> getCurrentUser() async {
     final url = Uri.parse('${baseUrl}current-user');
+    final response = await http.get(
+      url,
+      headers: await _getHeaders(),
+    );
 
-    try {
-      final response = await http.get(
-        url,
-        headers: await _getHeaders(),
-      );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      _logger.i('User Data: $data');
 
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
-      } else {
-        final errorData = jsonDecode(response.body);
-        _logger.e('Failed to fetch current user: ${errorData['message']}');
-        throw Exception('Failed to fetch current user');
-      }
-    } catch (e) {
-      _logger.e('An error occurred: $e');
+      // Debugging
+      return data;
+    } else {
       throw Exception('Failed to fetch current user');
     }
   }
