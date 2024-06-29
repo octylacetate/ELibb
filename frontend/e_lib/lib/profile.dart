@@ -13,7 +13,11 @@ import 'dart:ui' as ui;
 import 'package:lottie/lottie.dart';
 
 class Profile extends StatefulWidget {
-  const Profile({super.key});
+  final bool isLoggedIn;
+  final Future<void> Function() logout;
+
+  const Profile({Key? key, required this.isLoggedIn, required this.logout})
+      : super(key: key);
 
   @override
   State<Profile> createState() => _ProfileState();
@@ -39,14 +43,20 @@ class _ProfileState extends State<Profile> {
     'cover_imgs/the-mistborn-bookimg.jpeg',
     'cover_imgs/the-nature-of-wind-bookimg.jpg'
   ];
-  List screens = [ELib(), ELib(), Booksall(), Profile()];
-  int selectedIndex = 0;
+  List screens = [
+    ELib(isLoggedIn: true, logout: () async {}),
+    ELib(isLoggedIn: true, logout: () async {}),
+    Booksall(),
+    Profile(isLoggedIn: true, logout: () async {})
+  ];
+  int selectedIndex = 3;
   List<IconData> icons = [
     MyFlutterApp.home,
     MyFlutterApp.search,
     MyFlutterApp.library_icon,
     MyFlutterApp.supervisor_account,
   ];
+
   @override
   Widget build(BuildContext context) {
     var screenWidth = MediaQuery.of(context).size.width;
@@ -72,38 +82,52 @@ class _ProfileState extends State<Profile> {
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context) => Login()));
-                },
-                style: ButtonStyle(
-                  backgroundColor: MaterialStateProperty.resolveWith(
-                    (states) {
-                      // If the button is pressed, return green, otherwise blue
-                      if (states.contains(MaterialState.pressed)) {
-                        return null;
-                      }
-                      return Color.fromARGB(255, 219, 254, 250);
-                    },
-                  ),
-                  shape: MaterialStateProperty.all(RoundedRectangleBorder(
-                      side: BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
-                      borderRadius: BorderRadius.circular(40))),
-                  overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                    (Set<MaterialState> states) {
-                      if (states.contains(MaterialState.pressed))
-                        return Color.fromARGB(255, 17, 106, 136); //<-- SEE HERE
-                      return Color.fromARGB(
-                          255, 219, 254, 250); // Defer to the widget's default.
-                    },
+              onPressed: () {
+                if (widget.isLoggedIn) {
+                  widget.logout();
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => Login()),
+                  );
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => Login()),
+                  );
+                }
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.resolveWith(
+                  (states) {
+                    if (states.contains(MaterialState.pressed)) {
+                      return null;
+                    }
+                    return const Color.fromARGB(255, 219, 254, 250);
+                  },
+                ),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    side:
+                        const BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
+                    borderRadius: BorderRadius.circular(40),
                   ),
                 ),
-                child: Text(
-                  "Login",
-                  style: TextStyle(
-                    color: Color.fromARGB(255, 0, 21, 44),
-                  ),
-                )),
+                overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                  (Set<MaterialState> states) {
+                    if (states.contains(MaterialState.pressed)) {
+                      return const Color.fromARGB(255, 17, 106, 136);
+                    }
+                    return const Color.fromARGB(255, 219, 254, 250);
+                  },
+                ),
+              ),
+              child: Text(
+                widget.isLoggedIn ? "Logout" : "Login",
+                style: const TextStyle(
+                  color: Color.fromARGB(255, 0, 21, 44),
+                ),
+              ),
+            ),
           )
         ],
       ),
@@ -148,7 +172,11 @@ class _ProfileState extends State<Profile> {
             InkWell(
               onTap: () {
                 Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => ELib()));
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ELib(isLoggedIn: true, logout: () async {}),
+                    ));
               },
               child: ListTile(
                 leading: Icon(MyFlutterApp.home),

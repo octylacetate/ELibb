@@ -60,7 +60,10 @@ class _BooksallState extends State<Booksall> {
                                       Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                              builder: (context) => ELib()));
+                                            builder: (context) => ELib(
+                                                isLoggedIn: true,
+                                                logout: () async {}),
+                                          ));
                                     },
                                     child: Flexible(
                                         child: ElevatedButton(

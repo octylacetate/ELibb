@@ -33,7 +33,9 @@ class Signup extends StatelessWidget {
       ScaffoldMessengerState scaffoldMessenger, dynamic response) {
     if (response['statusCode'] == 200) {
       navigator.push(
-        MaterialPageRoute(builder: (context) => ELib()),
+        MaterialPageRoute(
+          builder: (context) => ELib(isLoggedIn: true, logout: () async {}),
+        ),
       );
     } else {
       _logger.w('Registration failed: ${response['message']}');

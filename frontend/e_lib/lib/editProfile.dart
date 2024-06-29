@@ -3,6 +3,7 @@ import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.da
 import 'package:e_lib/books_all_screen.dart';
 import 'package:e_lib/elib_home.dart';
 import 'package:e_lib/my_flutter_app_icons.dart';
+import 'package:e_lib/new_password.dart';
 import 'package:e_lib/profile.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:flutter/material.dart';
@@ -57,7 +58,9 @@ class _EditProfileState extends State<EditProfile> {
       ScaffoldMessengerState scaffoldMessenger, dynamic response) {
     if (response['statusCode'] == 200) {
       navigator.push(
-        MaterialPageRoute(builder: (context) => ELib()),
+        MaterialPageRoute(
+          builder: (context) => ELib(isLoggedIn: true, logout: () async {}),
+        ),
       );
     } else {
       _logger.w('Registration failed: ${response['message']}');
@@ -102,8 +105,13 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
-  List screens = [ELib(), ELib(), Booksall(), Profile()];
-  int selectedIndex = 0;
+  List screens = [
+    ELib(isLoggedIn: true, logout: () async {}),
+    ELib(isLoggedIn: true, logout: () async {}),
+    Booksall(),
+    Profile(isLoggedIn: true, logout: () async {})
+  ];
+  int selectedIndex = 3;
   List<IconData> icons = [
     MyFlutterApp.home,
     MyFlutterApp.search,
@@ -190,7 +198,11 @@ class _EditProfileState extends State<EditProfile> {
                       Text("Want to change password? "),
                       TextButton(
                           onPressed: () {
-                            Navigator.pop(context);
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        ChangePasswordScreen()));
                           },
                           style: TextButton.styleFrom(
                             foregroundColor:
@@ -207,7 +219,7 @@ class _EditProfileState extends State<EditProfile> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            setState(() => selectedIndex = 0);
+            setState(() => selectedIndex = 3);
           },
           child:
               const Icon(Icons.home, color: Color.fromARGB(255, 17, 106, 136)),
@@ -223,12 +235,14 @@ class _EditProfileState extends State<EditProfile> {
           tabBuilder: (int index, bool isActive) {
             return GestureDetector(
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => screens[index]));
-                selectedIndex = index;
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => screens[selectedIndex]));
+                selectedIndex = selectedIndex;
               },
               child: Icon(
-                icons[index],
+                icons[selectedIndex],
                 size: 24,
                 color: isActive
                     ? Colors.amberAccent

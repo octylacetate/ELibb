@@ -26,7 +26,9 @@ class _LoginState extends State<Login> {
       if (response['statusCode'] == 200) {
         // Login successful
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => ELib()),
+          MaterialPageRoute(
+            builder: (context) => ELib(isLoggedIn: true, logout: () async {}),
+          ),
         );
       } else {
         // Handle errors here
