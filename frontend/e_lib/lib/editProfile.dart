@@ -108,7 +108,7 @@ class _EditProfileState extends State<EditProfile> {
   List screens = [
     ELib(isLoggedIn: true, logout: () async {}),
     ELib(isLoggedIn: true, logout: () async {}),
-    Booksall(),
+    Booksall(isLoggedIn: true, logout: () async {}),
     Profile(isLoggedIn: true, logout: () async {})
   ];
   int selectedIndex = 3;

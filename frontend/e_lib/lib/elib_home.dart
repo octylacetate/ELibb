@@ -1,4 +1,5 @@
 import 'package:e_lib/service/apiclassusers.dart';
+import 'package:e_lib/widgets/fav_books.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
@@ -63,7 +64,7 @@ class _ELibState extends State<ELib> {
   List screens = [
     ELib(isLoggedIn: true, logout: () async {}),
     ELib(isLoggedIn: true, logout: () async {}),
-    Booksall(),
+    Booksall(isLoggedIn: true, logout: () async {}),
     Profile(isLoggedIn: true, logout: () async {})
   ];
   final ApiService apiService = ApiService();
@@ -203,7 +204,7 @@ class _ELibState extends State<ELib> {
                 Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const GenreScreen()));
+                        builder: (context) => const FavoriteBooks()));
               },
               child: const ListTile(
                 leading: Icon(MyFlutterApp.home),
@@ -228,7 +229,13 @@ class _ELibState extends State<ELib> {
               ),
             ),
             InkWell(
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            Profile(isLoggedIn: true, logout: () async {})));
+              },
               child: ListTile(
                 leading: Icon(MyFlutterApp.supervisor_account),
                 title: Text("Account"),

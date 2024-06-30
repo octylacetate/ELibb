@@ -33,7 +33,7 @@ class _ProfileState extends State<Profile> {
   List screens = [
     ELib(isLoggedIn: true, logout: () async {}),
     ELib(isLoggedIn: true, logout: () async {}),
-    Booksall(),
+    Booksall(isLoggedIn: true, logout: () async {}),
     Profile(isLoggedIn: true, logout: () async {})
   ];
   int selectedIndex = 3;
@@ -268,7 +268,7 @@ class _ProfileState extends State<Profile> {
                   : Container(
                       width: 400,
                       decoration: const BoxDecoration(
-                        color: Colors.white,
+                        color: Color.fromARGB(255, 255, 255, 255),
                         borderRadius: BorderRadius.only(
                           topRight: Radius.circular(40.0),
                           bottomRight: Radius.circular(0.0),
@@ -276,18 +276,65 @@ class _ProfileState extends State<Profile> {
                           bottomLeft: Radius.circular(0.0),
                         ),
                       ),
-                      child: Center(
-                        child: Text(
-                          'Other Content',
-                          style: TextStyle(
-                            color: Color.fromARGB(255, 0, 21, 44),
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Sedan',
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 30,
                           ),
-                        ),
-                      ),
-                    ),
+                          Text(
+                            "Full Name",
+                            style: TextStyle(
+                                color: Color.fromARGB(255, 0, 21, 44),
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Sedan'),
+                          ),
+                          Text(
+                            "Bio text",
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 0, 21, 44),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text(
+                            "Email",
+                            style: TextStyle(
+                                color: Color.fromARGB(255, 0, 21, 44),
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Sedan'),
+                          ),
+                          Text(
+                            userData != null
+                                ? "${userData!['email']}"
+                                : "email@gmail.com",
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 0, 21, 44),
+                            ),
+                          ),
+                          SizedBox(
+                            height: 20,
+                          ),
+                          Text(
+                            "Phone No.",
+                            style: TextStyle(
+                                color: Color.fromARGB(255, 0, 21, 44),
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Sedan'),
+                          ),
+                          Text(
+                            "031245855",
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 0, 21, 44),
+                            ),
+                          ),
+                        ],
+                      )),
             ),
             Align(
                 alignment: const Alignment(1.0, -0.8),
@@ -383,8 +430,8 @@ class _ProfileState extends State<Profile> {
                         },
                       ),
                       shape: MaterialStateProperty.all(RoundedRectangleBorder(
-                          side:
-                              BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
+                          side: BorderSide(
+                              color: Color.fromARGB(255, 219, 254, 250)),
                           borderRadius: BorderRadius.circular(40))),
                       overlayColor: MaterialStateProperty.resolveWith<Color?>(
                         (Set<MaterialState> states) {
