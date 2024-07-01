@@ -20,6 +20,19 @@ const userSchema = new Schema({
         index: true
     },
 
+    fullName: {
+        type: String,
+        required: true,
+    },
+
+    phoneNumber: {
+        type: String,
+    },
+
+    bio: {
+        type: String,
+    },
+
     books: {
         type: Schema.Types.ObjectId,
         ref: "Books"
