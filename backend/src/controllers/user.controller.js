@@ -227,9 +227,7 @@ const getCurrentUser = asyncHandler(async (req, res, next) => {
     try {
         const user = await User.findById(req.user._id).select('-password -refreshToken');
         if (user) {
-            const avatarUrl = user.avatar ? `/public/temp/${user.avatar.fileName}` : null;
-            console.log("avatarUrl : " + avatarUrl);
-            return res.status(200).json(new ApiResponse(200, { ...user.toObject(), avatar: avatarUrl }, 'User fetched successfully'));
+            return res.status(200).json(new ApiResponse(200, {user}, 'User fetched successfully'));
         } else {
             throw new ApiError(404, 'User not found');
         }
