@@ -1,5 +1,5 @@
-import 'dart:io';
-import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'dart:html' as html;
+import 'dart:typed_data';
 import 'package:e_lib/books_all_screen.dart';
 import 'package:e_lib/elib_home.dart';
 import 'package:e_lib/my_flutter_app_icons.dart';
@@ -8,10 +8,8 @@ import 'package:e_lib/profile.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'package:image_picker/image_picker.dart';
-import 'dart:html' as html;
-import 'dart:typed_data';
-import 'package:file_picker/file_picker.dart';
+
+import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 
 class EditProfile extends StatefulWidget {
   const EditProfile({super.key});
@@ -30,8 +28,8 @@ class _EditProfileState extends State<EditProfile> {
 
   final ApiService apiService = ApiService();
   final Logger _logger = Logger();
-  final ImagePicker _picker = ImagePicker();
-  XFile? _profileImage;
+  Uint8List? _profileImageBytes;
+  String? _profileImageName;
 
   void _register(BuildContext context) async {
     final email = _emailController.text;
@@ -54,30 +52,35 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
-  void _handleRegistrationResult(NavigatorState navigator,
-      ScaffoldMessengerState scaffoldMessenger, dynamic response) {
-    if (response['statusCode'] == 200) {
-      navigator.push(
-        MaterialPageRoute(
-          builder: (context) => ELib(isLoggedIn: true, logout: () async {}),
-        ),
-      );
+  Future<void> _updateProfilePicture() async {
+    if (_profileImageBytes != null && _profileImageName != null) {
+      try {
+        final response = await apiService.updateUserAvatar(
+            _profileImageBytes!, _profileImageName!);
+        if (response.statusCode == 200) {
+          _logger.i('Profile picture updated successfully');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Profile picture updated successfully')),
+          );
+        } else {
+          _logger.e('Failed to update profile picture');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update profile picture')),
+          );
+        }
+      } catch (error) {
+        _logger.e('Failed to update profile picture: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update profile picture: $error')),
+        );
+      }
     } else {
-      _logger.w('Registration failed: ${response['message']}');
-      _showErrorSnackBar(
-          scaffoldMessenger, 'Registration failed: ${response['message']}');
+      _logger.e('Profile image bytes or name is null');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No profile image selected')),
+      );
     }
   }
-
-  void _showErrorSnackBar(
-      ScaffoldMessengerState scaffoldMessenger, String message) {
-    scaffoldMessenger.showSnackBar(
-      SnackBar(content: Text(message)),
-    );
-  }
-
-  Uint8List? _profileImageBytes;
-  String? _profileImageName;
 
   Future<void> _pickImage() async {
     try {
@@ -103,6 +106,28 @@ class _EditProfileState extends State<EditProfile> {
     } catch (e) {
       _logger.e('An error occurred while picking the image: $e');
     }
+  }
+
+  void _handleRegistrationResult(NavigatorState navigator,
+      ScaffoldMessengerState scaffoldMessenger, dynamic response) {
+    if (response['statusCode'] == 200) {
+      navigator.push(
+        MaterialPageRoute(
+          builder: (context) => ELib(isLoggedIn: true, logout: () async {}),
+        ),
+      );
+    } else {
+      _logger.w('Registration failed: ${response['message']}');
+      _showErrorSnackBar(
+          scaffoldMessenger, 'Registration failed: ${response['message']}');
+    }
+  }
+
+  void _showErrorSnackBar(
+      ScaffoldMessengerState scaffoldMessenger, String message) {
+    scaffoldMessenger.showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   List screens = [
@@ -161,6 +186,21 @@ class _EditProfileState extends State<EditProfile> {
                           ? MemoryImage(_profileImageBytes!)
                           : AssetImage('assets/images/default-avatar.png')
                               as ImageProvider,
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: _updateProfilePicture,
+                    style: ElevatedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Color.fromARGB(255, 0, 21, 44),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    ),
+                    child: Text(
+                      "Update Profile Picture",
+                      style: TextStyle(
+                        fontSize: 20,
+                      ),
                     ),
                   ),
                   SizedBox(height: 20),
@@ -239,10 +279,10 @@ class _EditProfileState extends State<EditProfile> {
                     context,
                     MaterialPageRoute(
                         builder: (context) => screens[selectedIndex]));
-                selectedIndex = selectedIndex;
+                setState(() => selectedIndex = index);
               },
               child: Icon(
-                icons[selectedIndex],
+                icons[index],
                 size: 24,
                 color: isActive
                     ? Colors.amberAccent

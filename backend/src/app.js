@@ -5,7 +5,7 @@ import cors from "cors";
 const app = express();
 
 app.use(cors({
-    origin: 'http://localhost:65519' ,   //frontend ki port dlni
+    origin: 'http://localhost:60741' ,   //frontend ki port dlni
     credentials: true 
 }));
 app.use(express.json({limit:"16kb"}));

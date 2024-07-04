@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
@@ -10,48 +11,67 @@ class ApiService {
 
   Future<Map<String, String>> _getHeaders() async {
     String? accessToken = await storage.read(key: 'accessToken');
-    _logger.d('Retrieved Access Token: $accessToken');
-    if (accessToken == null) {
-      _logger.e('Access token is null');
-      throw Exception('Access token is null');
+    _logger.d("AccessToken retrieved: $accessToken");
+    if (accessToken == null || accessToken.isEmpty) {
+      _logger.e("Access token is null or empty");
+      throw Exception("Access token is null or empty");
     }
     return {
-      'Content-Type': 'application/json',
       'Authorization': 'Bearer $accessToken',
     };
   }
 
   Future<Map<String, dynamic>> registerUser(
-      String username, String email, String password) async {
+      String username,
+      String email,
+      String password,
+      String fullName,
+      String phoneNumber,
+      String bio,
+      Uint8List avatar,
+      String fileName) async {
     final url = Uri.parse('${baseUrl}register');
-
-    _logger.d(
-        'Sending request to $url with email: $email, username: $username, password: $password');
+    var request = http.MultipartRequest('POST', url);
 
     try {
-      var response = await http.post(url,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode({
-            'username': username,
-            'email': email,
-            'password': password,
-          }));
+      request.fields['username'] = username;
+      request.fields['email'] = email;
+      request.fields['password'] = password;
+      request.fields['fullName'] = fullName;
+      request.fields['phoneNumber'] = phoneNumber;
+      request.fields['bio'] = bio;
+
+      request.files.add(
+          http.MultipartFile.fromBytes('avatar', avatar, filename: fileName));
+      request.headers.addAll({'Content-Type': 'multipart/form-data'});
+
+      final response = await request.send();
+      final responseBody = await http.Response.fromStream(response);
 
       _logger.d('Received response with status code: ${response.statusCode}');
-      _logger.d('Response body: ${response.body}');
+      _logger.d('Response body: ${responseBody.body}');
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        await storage.write(key: 'accessToken', value: data['accessToken']);
-        await storage.write(key: 'refreshToken', value: data['refreshToken']);
-        _logger.i('User registered successfully');
-        _logger.d('Stored Access Token: ${data['accessToken']}');
-        _logger.d('Stored Refresh Token: ${data['refreshToken']}');
-        return {'statusCode': 200, 'message': 'User registered successfully'};
+        final jsonResponse = jsonDecode(responseBody.body);
+        final accessToken = jsonResponse['data']['accessToken'];
+        final refreshToken = jsonResponse['data']['refreshToken'];
+
+        if (accessToken != null && refreshToken != null) {
+          await storage.write(key: 'accessToken', value: accessToken);
+          await storage.write(key: 'refreshToken', value: refreshToken);
+          _logger.i('User registered successfully');
+          _logger.d('Stored Access Token: $accessToken');
+          _logger.d('Stored Refresh Token: $refreshToken');
+          return {'statusCode': 200, 'message': 'User registered successfully'};
+        } else {
+          _logger.e('Access or refresh token is missing in the response');
+          return {
+            'statusCode': 500,
+            'message': 'Access or refresh token is missing in the response'
+          };
+        }
       } else {
-        final errorData = jsonDecode(response.body);
+        final errorData = jsonDecode(responseBody.body);
         _logger.e('Failed to register user: ${errorData['message']}');
         return {
           'statusCode': response.statusCode,
@@ -211,11 +231,42 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       _logger.i('User Data: $data');
-
-      // Debugging
-      return data;
+      return data['data'];
     } else {
       throw Exception('Failed to fetch current user');
+    }
+  }
+
+  Future<http.Response> updateUserAvatar(
+      Uint8List imageBytes, String fileName) async {
+    final url = Uri.parse('${baseUrl}update-avatar');
+    final request = http.MultipartRequest('PATCH', url);
+
+    request.headers.addAll(await _getHeaders());
+
+    request.files.add(
+      http.MultipartFile.fromBytes(
+        'avatar',
+        imageBytes,
+        filename: fileName,
+      ),
+    );
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      _logger.d('Server Response: ${response.statusCode}');
+      _logger.d('Response Body: ${response.body}');
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to update avatar');
+      }
+
+      return response;
+    } catch (e) {
+      _logger.e('Failed to update profile picture: $e');
+      throw Exception('Failed to update avatar');
     }
   }
 
@@ -227,57 +278,18 @@ class ApiService {
       String phoneNumber,
       String bio) async {
     final url = Uri.parse('${baseUrl}update-account');
+    final headers = await _getHeaders();
+    final body = jsonEncode({
+      'username': username,
+      'email': email,
+      'password': password,
+      'fullName': fullName,
+      'phoneNumber': phoneNumber,
+      'bio': bio,
+    });
 
-    try {
-      final response = await http.post(
-        url,
-        headers: await _getHeaders(),
-        body: jsonEncode({
-          'username': username,
-          'email': email,
-          'password': password,
-          'fullName': fullName,
-          'phoneNumber': phoneNumber,
-          'bio': bio,
-        }),
-      );
-
-      if (response.statusCode == 200) {
-        _logger.i('Account details updated successfully');
-        return jsonDecode(response.body);
-      } else {
-        final errorData = jsonDecode(response.body);
-        _logger.e('Failed to update account details: ${errorData['message']}');
-        throw Exception(
-            'Failed to update account details: ${errorData['message']}');
-      }
-    } catch (e) {
-      _logger.e('An error occurred: $e');
-      throw Exception('Failed to update account details');
-    }
-  }
-
-  Future<void> updateUserAvatar(String avatarPath) async {
-    final url = Uri.parse('$baseUrl/update-avatar');
-    var request = http.MultipartRequest('POST', url);
-
-    try {
-      request.headers.addAll(await _getHeaders());
-      request.files
-          .add(await http.MultipartFile.fromPath('avatar', avatarPath));
-
-      final response = await request.send();
-
-      if (response.statusCode == 200) {
-        _logger.i('Avatar updated successfully');
-      } else {
-        _logger.e('Failed to update avatar');
-        throw Exception('Failed to update avatar');
-      }
-    } catch (e) {
-      _logger.e('An error occurred: $e');
-      throw Exception('Failed to update avatar');
-    }
+    final response = await http.put(url, headers: headers, body: body);
+    return jsonDecode(response.body);
   }
 
   Future<void> updateUserCoverImage(String coverImagePath) async {

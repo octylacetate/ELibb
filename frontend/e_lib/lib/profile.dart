@@ -1,9 +1,7 @@
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
-import 'package:e_lib/book_detail_screen.dart';
 import 'package:e_lib/books_all_screen.dart';
 import 'package:e_lib/editProfile.dart';
 import 'package:e_lib/elib_home.dart';
-import 'package:e_lib/genre.dart';
 import 'package:e_lib/help_icons.dart';
 import 'package:e_lib/login.dart';
 import 'package:e_lib/my_book.dart';
@@ -12,9 +10,7 @@ import 'package:e_lib/service/apiclassusers.dart';
 import 'package:e_lib/widgets/myBooksLib.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
-import 'dart:ui' as ui;
 import 'package:lottie/lottie.dart';
-// Import the MyBooksLib class
 
 class Profile extends StatefulWidget {
   final bool isLoggedIn;
@@ -56,7 +52,7 @@ class _ProfileState extends State<Profile> {
     try {
       final response = await apiService.getCurrentUser();
       setState(() {
-        userData = response['data'];
+        userData = response;
       });
       _logger.e("User Data: $userData");
     } catch (error) {
@@ -161,9 +157,10 @@ class _ProfileState extends State<Profile> {
               child: Column(
                 children: [
                   CircleAvatar(
-                    backgroundImage: AssetImage(
-                      'assets/logo/cat.jpeg',
-                    ),
+                    backgroundImage: userData != null &&
+                            userData!['avatar'] != null
+                        ? NetworkImage(userData!['avatar'])
+                        : AssetImage('assets/logo/cat.jpeg') as ImageProvider,
                     minRadius: 20,
                     maxRadius: 40,
                   ),
@@ -292,7 +289,9 @@ class _ProfileState extends State<Profile> {
                                 fontFamily: 'Sedan'),
                           ),
                           Text(
-                            "Bio text",
+                            userData != null
+                                ? "${userData!['fullName']}"
+                                : "fullName",
                             style: TextStyle(
                               color: Color.fromARGB(255, 0, 21, 44),
                             ),
@@ -328,7 +327,25 @@ class _ProfileState extends State<Profile> {
                                 fontFamily: 'Sedan'),
                           ),
                           Text(
-                            "031245855",
+                            userData != null
+                                ? "${userData!['phoneNumber']}"
+                                : "add phone number",
+                            style: TextStyle(
+                              color: Color.fromARGB(255, 0, 21, 44),
+                            ),
+                          ),
+                          Text(
+                            "Bio",
+                            style: TextStyle(
+                                color: Color.fromARGB(255, 0, 21, 44),
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                fontFamily: 'Sedan'),
+                          ),
+                          Text(
+                            userData != null
+                                ? "${userData!['bio']}"
+                                : "add bio",
                             style: TextStyle(
                               color: Color.fromARGB(255, 0, 21, 44),
                             ),
@@ -357,9 +374,9 @@ class _ProfileState extends State<Profile> {
               top: 30,
               left: MediaQuery.of(context).size.width / 2 - 40,
               child: CircleAvatar(
-                backgroundImage: AssetImage(
-                  'assets/logo/cat.jpeg',
-                ),
+                backgroundImage: userData != null && userData!['avatar'] != null
+                    ? NetworkImage(userData!['avatar'])
+                    : AssetImage('assets/logo/cat.jpeg') as ImageProvider,
                 radius: 40,
               ),
             ),

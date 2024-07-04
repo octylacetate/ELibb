@@ -43,6 +43,8 @@ const registerUser = asyncHandler(async (req, res, next) => {
             throw new ApiError(400, "Avatar file is required");
         }
 
+        console.log(`Avatar stored at: ${avatar}`);
+
         const user = await User.create({
             email,
             password,
@@ -59,11 +61,25 @@ const registerUser = asyncHandler(async (req, res, next) => {
             throw new ApiError(500, "Something went wrong while registering the user");
         }
 
-        return res.status(200).json(new ApiResponse(200, createdUser, "User registered successfully"));
+        // Generate access and refresh tokens
+        const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+
+        return res.status(200).json(new ApiResponse(200, {
+            user: createdUser,
+            accessToken,
+            refreshToken
+        }, "User registered successfully"));
     } catch (err) {
         next(err);
     }
 });
+
+
+
+
+
+  
+  
 
 
 const loginUser = asyncHandler(async (req, res) =>{
@@ -207,15 +223,22 @@ const changeCurrentPassword = asyncHandler(async(req, res) => {
 })
 
 
-const getCurrentUser = asyncHandler(async(req, res) => {
-    return res
-    .status(200)
-    .json(new ApiResponse(
-        200,
-        req.user,
-        "User fetched successfully"
-    ))
-})
+const getCurrentUser = asyncHandler(async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password -refreshToken');
+        if (user) {
+            const avatarUrl = user.avatar ? `/public/temp/${user.avatar.fileName}` : null;
+            console.log("avatarUrl : " + avatarUrl);
+            return res.status(200).json(new ApiResponse(200, { ...user.toObject(), avatar: avatarUrl }, 'User fetched successfully'));
+        } else {
+            throw new ApiError(404, 'User not found');
+        }
+    } catch (error) {
+        next(error);
+    }
+});
+
+
 
 const updateAccountDetails = asyncHandler(async(req, res) => {
     const {username, email} = req.body
