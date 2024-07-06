@@ -24,55 +24,56 @@ const generateAccessAndRefereshTokens = async(userId) =>{
 
 const registerUser = asyncHandler(async (req, res, next) => {
     try {
-        const { email, username, password, fullName, phoneNumber, bio } = req.body;
-
-        if ([email, username, password, fullName].some(field => !field?.trim())) {
-            throw new ApiError(400, "All fields are required");
-        }
-
-        const existedUser = await User.findOne({
-            $or: [{ username }, { email }]
-        });
-
-        if (existedUser) {
-            throw new ApiError(409, "User with email or username already exists");
-        }
-
-        const avatar = req.file?.path;
-        if (!avatar) {
-            throw new ApiError(400, "Avatar file is required");
-        }
-
-        console.log(`Avatar stored at: ${avatar}`);
-
-        const user = await User.create({
-            email,
-            password,
-            username,
-            avatar,
-            fullName,
-            phoneNumber: phoneNumber || "",
-            bio: bio || ""
-        });
-
-        const createdUser = await User.findById(user._id).select("-password -refreshToken");
-
-        if (!createdUser) {
-            throw new ApiError(500, "Something went wrong while registering the user");
-        }
-
-        // Generate access and refresh tokens
-        const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
-
-        return res.status(200).json(new ApiResponse(200, {
-            user: createdUser,
-            accessToken,
-            refreshToken
-        }, "User registered successfully"));
+      const { email, username, password, fullName, phoneNumber, bio } = req.body;
+  
+      if ([email, username, password, fullName].some(field => !field?.trim())) {
+        throw new ApiError(400, 'All fields are required');
+      }
+  
+      const existedUser = await User.findOne({
+        $or: [{ username }, { email }],
+      });
+  
+      if (existedUser) {
+        throw new ApiError(409, 'User with email or username already exists');
+      }
+  
+      const avatar = req.file?.filename; // Save only the filename
+      if (!avatar) {
+        throw new ApiError(400, 'Avatar file is required');
+      }
+  
+      console.log(`Avatar stored at: ${avatar}`);
+  
+      const user = await User.create({
+        email,
+        password,
+        username,
+        avatar: `temp/${avatar}`, // Save the path relative to the public directory
+        fullName,
+        phoneNumber: phoneNumber || '',
+        bio: bio || '',
+      });
+  
+      const createdUser = await User.findById(user._id).select('-password -refreshToken');
+  
+      if (!createdUser) {
+        throw new ApiError(500, 'Something went wrong while registering the user');
+      }
+  
+      // Generate access and refresh tokens
+      const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id);
+  
+      return res.status(200).json(new ApiResponse(200, {
+        user: createdUser,
+        accessToken,
+        refreshToken,
+      }, 'User registered successfully'));
     } catch (err) {
-        next(err);
+      next(err);
     }
-});
+  });
+  
 
 
 
@@ -265,7 +266,7 @@ const updateAccountDetails = asyncHandler(async(req, res) => {
     
 const updateUserAvatar = asyncHandler(async(req, res) => {
 
-    const avatarNewPath = req.file?.path
+    const avatarNewPath = req.file?.filename
 
     if (!avatarNewPath) {
         throw new ApiError(400, "Avatar file is missing")
@@ -277,7 +278,7 @@ const updateUserAvatar = asyncHandler(async(req, res) => {
         req.user?._id,
         {
             $set:{
-                avatar: avatarNewPath
+                avatar: "temp/"+avatarNewPath
             }
         },
         {new: true}

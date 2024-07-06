@@ -72,10 +72,11 @@ class _ELibState extends State<ELib> {
   Future<void> fetchUserData() async {
     try {
       final response = await apiService.getCurrentUser();
+      _logger.e("User Datadfsfsf: $response");
       setState(() {
-        userData = response['data'];
+        userData = response;
       });
-      _logger.e("User Data: $userData");
+      _logger.e("User Datadfsfsf: $userData");
     } catch (error) {
       // Handle error, e.g., show a snackbar
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -92,6 +93,7 @@ class _ELibState extends State<ELib> {
 
   @override
   Widget build(BuildContext context) {
+    const String baseUrl = "http://localhost:3000/";
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
@@ -179,16 +181,18 @@ class _ELibState extends State<ELib> {
               child: Column(
                 children: [
                   CircleAvatar(
-                    backgroundImage: AssetImage(
-                      'assets/logo/cat.jpeg',
-                    ),
+                    backgroundImage: userData != null &&
+                            userData!['user']['avatar'] != null
+                        ? NetworkImage(
+                            "${baseUrl}${userData!['user']['avatar']}")
+                        : AssetImage('assets/logo/cat.jpeg') as ImageProvider,
                     minRadius: 20,
                     maxRadius: 40,
                   ),
                   Padding(padding: EdgeInsets.all(4)),
                   Text(
                     userData != null
-                        ? "@${userData!['username']}"
+                        ? "@${userData!['user']['username']}"
                         : "@username",
                     style: TextStyle(
                         color: Color.fromARGB(255, 0, 21, 44),

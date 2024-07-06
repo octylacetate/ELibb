@@ -230,7 +230,7 @@ class ApiService {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      _logger.i('User Data: $data');
+      _logger.i('User Data: ${data['user']}');
       return data['data'];
     } else {
       throw Exception('Failed to fetch current user');

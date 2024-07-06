@@ -51,10 +51,11 @@ class _ProfileState extends State<Profile> {
   Future<void> fetchUserData() async {
     try {
       final response = await apiService.getCurrentUser();
+      _logger.e("User Datadfsfsf: $response");
       setState(() {
         userData = response;
       });
-      _logger.e("User Data: $userData");
+      _logger.e("User Datadfsfsf: $userData");
     } catch (error) {
       // Handle error, e.g., show a snackbar
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -67,6 +68,9 @@ class _ProfileState extends State<Profile> {
   Widget build(BuildContext context) {
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
+    const String baseUrl =
+        "http://localhost:3000/"; // Replace with your backend URL root
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 219, 254, 250),
@@ -158,8 +162,9 @@ class _ProfileState extends State<Profile> {
                 children: [
                   CircleAvatar(
                     backgroundImage: userData != null &&
-                            userData!['avatar'] != null
-                        ? NetworkImage(userData!['avatar'])
+                            userData!['user']['avatar'] != null
+                        ? NetworkImage(
+                            "${baseUrl}${userData!['user']['avatar']}")
                         : AssetImage('assets/logo/cat.jpeg') as ImageProvider,
                     minRadius: 20,
                     maxRadius: 40,
@@ -167,7 +172,7 @@ class _ProfileState extends State<Profile> {
                   Padding(padding: EdgeInsets.all(4)),
                   Text(
                     userData != null
-                        ? "@${userData!['username']}"
+                        ? "@${userData!['user']['username']}"
                         : "@username",
                     style: TextStyle(
                         color: Color.fromARGB(255, 0, 21, 44),
@@ -290,7 +295,7 @@ class _ProfileState extends State<Profile> {
                           ),
                           Text(
                             userData != null
-                                ? "${userData!['fullName']}"
+                                ? "${userData!['user']['fullName']}"
                                 : "fullName",
                             style: TextStyle(
                               color: Color.fromARGB(255, 0, 21, 44),
@@ -309,7 +314,7 @@ class _ProfileState extends State<Profile> {
                           ),
                           Text(
                             userData != null
-                                ? "${userData!['email']}"
+                                ? "${userData!['user']['email']}"
                                 : "email@gmail.com",
                             style: TextStyle(
                               color: Color.fromARGB(255, 0, 21, 44),
@@ -328,7 +333,7 @@ class _ProfileState extends State<Profile> {
                           ),
                           Text(
                             userData != null
-                                ? "${userData!['phoneNumber']}"
+                                ? "${userData!['user']['phoneNumber']}"
                                 : "add phone number",
                             style: TextStyle(
                               color: Color.fromARGB(255, 0, 21, 44),
@@ -344,7 +349,7 @@ class _ProfileState extends State<Profile> {
                           ),
                           Text(
                             userData != null
-                                ? "${userData!['bio']}"
+                                ? "${userData!['user']['bio']}"
                                 : "add bio",
                             style: TextStyle(
                               color: Color.fromARGB(255, 0, 21, 44),
@@ -374,8 +379,9 @@ class _ProfileState extends State<Profile> {
               top: 30,
               left: MediaQuery.of(context).size.width / 2 - 40,
               child: CircleAvatar(
-                backgroundImage: userData != null && userData!['avatar'] != null
-                    ? NetworkImage(userData!['avatar'])
+                backgroundImage: userData != null &&
+                        userData!['user']['avatar'] != null
+                    ? NetworkImage("${baseUrl}${userData!['user']['avatar']}")
                     : AssetImage('assets/logo/cat.jpeg') as ImageProvider,
                 radius: 40,
               ),
@@ -383,7 +389,9 @@ class _ProfileState extends State<Profile> {
             Align(
               alignment: const Alignment(0, -0.52),
               child: Text(
-                userData != null ? "@${userData!['username']}" : "@username",
+                userData != null
+                    ? "@${userData!['user']['username']}"
+                    : "@username",
                 style: TextStyle(
                     color: Color.fromARGB(255, 0, 21, 44),
                     fontSize: 22,
