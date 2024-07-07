@@ -21,7 +21,7 @@ const addFavourite = asyncHandler( async (req, res) => {
                 user: req.user
             }
         )
-        res.status(200).json( new ApiResponse(
+        return res.status(200).json( new ApiResponse(
                 200,
                 {addedToFavourite},
                 "added to favourite successfully"
@@ -30,21 +30,28 @@ const addFavourite = asyncHandler( async (req, res) => {
         throw new ApiError(500, "Something went wrong while adding to favourite")
     }
 })
-
-const getAllFavourite = asyncHandler( async (req, res) => {
+const getAllFavourite = asyncHandler(async (req, res) => {
     try {
         const userId = req.user;
 
-        const allFavourites = await Favourite.find({user: userId});
-        res.status(200).json( new ApiResponse(
-                200,
-                { allFavourites },
-                "Favourites displayed successfully"
-        ))
+        const allFavourites = await Favourite.find({ user: userId })
+            .populate('book')
+            .populate('user');
+
+        if (!allFavourites) {
+            throw new ApiError(404, "No favourites found for the user");
+        }
+
+        return res.status(200).json(new ApiResponse(
+            200,
+            { allFavourites },
+            "Favourites displayed successfully"
+        ));
     } catch (error) {
-        throw new ApiError(500, "Something went wrong while getting the favourites")
+        throw new ApiError(500, "Something went wrong while getting the favourites");
     }
-})
+});
+
 
 
 const removeFavourite = asyncHandler(async (req, res) => {
@@ -58,7 +65,7 @@ const removeFavourite = asyncHandler(async (req, res) => {
 
         const deletedFavourite = await Favourite.findOneAndDelete({ _id: favourite._id });
 
-        res.status(200).json(new ApiResponse(
+        return res.status(200).json(new ApiResponse(
             200,
             {},
             "Removed from favorites successfully"
