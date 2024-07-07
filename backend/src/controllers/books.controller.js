@@ -2,6 +2,8 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js"
 import { Books } from "../models/books.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import fs from 'fs';
+import path from 'path';
 
 
 const uploadBooks = asyncHandler(async (req, res) => {
@@ -85,6 +87,13 @@ const deleteBook = asyncHandler(async (req, res) => {
         if (!bookDeleted) {
             throw new ApiError(400, "book not deleted")
         }
+
+        const filePath = bookDeleted.bookPath; 
+
+        if (filePath) {
+            fs.unlinkSync(filePath); 
+        }
+
         return res.status(200).json(
             new ApiResponse(
                 200,
