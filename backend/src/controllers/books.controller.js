@@ -14,7 +14,8 @@ const uploadBooks = asyncHandler(async (req, res) => {
         }
         const book = await Books.create({
             bookTitle,
-            bookPath
+            bookPath,
+            publishedBy: req.user
         })
 
         if(!book){
@@ -38,8 +39,8 @@ const getAllBooks = asyncHandler(async (req, res) => {
         
         const allBooks = await Books.find().skip(skip).limit(limit);
 
-        if(!allBooks){
-            throw new ApiError(402, "couldn't get the books");
+        if (!allBooks || allBooks.length === 0) {
+            throw new ApiError(404, "No books found");
         }
 
         const totalDocuments = await Books.countDocuments();
@@ -60,7 +61,7 @@ const getAllBooks = asyncHandler(async (req, res) => {
         try {
            const bookId = re.param.bookId;
             
-            const book = Books.findById(bookId)
+            const book = await Books.findById(bookId)
 
             if(!book){
                 throw new ApiError(401, "Book doesn't exists")
