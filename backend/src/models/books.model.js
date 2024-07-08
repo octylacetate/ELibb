@@ -16,6 +16,17 @@ const bookSchema = mongoose.Schema({
         required: true
     },
 
+    author: {
+        type: String,
+        required: true,
+        default: "Unknown"
+    },
+
+    description: {
+        type: String,
+        required: true
+    },
+
     publishedBy:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"

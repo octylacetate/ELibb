@@ -7,9 +7,9 @@ import path from 'path';
 
 
 const uploadBooks = asyncHandler(async (req, res) => {
-    const { bookTitle } = req.body;
-    const bookPath = req.files?.bookPath[0].path.split('public\\').pop().replace(/\\/g, '/'); // Adjusting the path format
-    const bookCoverPath = req.files?.bookCover[0].path.split('public\\').pop().replace(/\\/g, '/'); // Adjusting the path format
+    const { bookTitle, author, description } = req.body;
+    const bookPath = req.files?.bookPath[0].path.split('public\\').pop().replace(/\\/g, '/'); 
+    const bookCoverPath = req.files?.bookCover[0].path.split('public\\').pop().replace(/\\/g, '/'); 
 
     if (!bookTitle || !bookPath || !bookCoverPath) {
         throw new ApiError(400, "All fields are required");
@@ -17,6 +17,8 @@ const uploadBooks = asyncHandler(async (req, res) => {
 
     const book = await Books.create({
         bookTitle,
+        author,
+        description,
         bookPath,
         bookCover: bookCoverPath,
         publishedBy: req.user._id
