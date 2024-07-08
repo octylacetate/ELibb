@@ -34,7 +34,7 @@ class _EditProfileState extends State<EditProfile> {
   void _register(BuildContext context) async {
     final email = _emailController.text;
     final username = _usernameController.text;
-    final password = _passwordController.text;
+    // final password = _passwordController.text;
     final fullName = _fullNameController.text;
     final phoneNumber = _phoneNumberController.text;
     final bio = _bioController.text;
@@ -44,10 +44,10 @@ class _EditProfileState extends State<EditProfile> {
 
     try {
       final response = await apiService.updateAccountDetails(
-          username, email, password, fullName, phoneNumber, bio);
+          username, email, fullName, phoneNumber, bio);
       _handleRegistrationResult(navigator, scaffoldMessenger, response);
     } catch (error) {
-      _logger.e('An error occurred during registration');
+      _logger.e('An error occurred during registration : $error');
       _showErrorSnackBar(scaffoldMessenger, 'An error occurred: $error');
     }
   }

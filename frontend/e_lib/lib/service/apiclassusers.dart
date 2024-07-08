@@ -17,6 +17,7 @@ class ApiService {
       throw Exception("Access token is null or empty");
     }
     return {
+      'Content-Type': 'application/json',
       'Authorization': 'Bearer $accessToken',
     };
   }
@@ -270,25 +271,19 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> updateAccountDetails(
-      String username,
-      String email,
-      String password,
-      String fullName,
-      String phoneNumber,
-      String bio) async {
+  Future<Map<String, dynamic>> updateAccountDetails(String username,
+      String email, String fullName, String phoneNumber, String bio) async {
     final url = Uri.parse('${baseUrl}update-account');
     final headers = await _getHeaders();
     final body = jsonEncode({
       'username': username,
       'email': email,
-      'password': password,
       'fullName': fullName,
       'phoneNumber': phoneNumber,
       'bio': bio,
     });
 
-    final response = await http.put(url, headers: headers, body: body);
+    final response = await http.patch(url, headers: headers, body: body);
     return jsonDecode(response.body);
   }
 
