@@ -1,5 +1,6 @@
+import 'package:e_lib/screens/book_list_screen.dart';
 import 'package:e_lib/service/apiclassusers.dart';
-import 'package:e_lib/widgets/fav_books.dart';
+import 'package:e_lib/service/apiservicebooks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
@@ -32,6 +33,11 @@ class _ELibState extends State<ELib> {
   bool isPressed = false;
   int currentIndex = 0;
   int selectedIndex = 0;
+  List<dynamic> books = [];
+  bool isLoading = true;
+  bool isError = false;
+
+  final String baseUrl = "http://localhost:3000/";
 
   List<String> genres = [
     'All genres',
@@ -44,14 +50,6 @@ class _ELibState extends State<ELib> {
     'Non-fiction',
     'Young-adult',
     'Children\'s-literature'
-  ];
-
-  List<String> booksImgs = [
-    'cover_imgs/mistborn-bookimg.jpeg',
-    'cover_imgs/lord-of-the-rings-bookimg.jpg',
-    'cover_imgs/A_Song_of_Ice_and_Fire-bookimg.jpg',
-    'cover_imgs/the-mistborn-bookimg.jpeg',
-    'cover_imgs/the-nature-of-wind-bookimg.jpg'
   ];
 
   List<IconData> icons = [
@@ -68,15 +66,17 @@ class _ELibState extends State<ELib> {
     Profile(isLoggedIn: true, logout: () async {})
   ];
   final ApiService apiService = ApiService();
+  final BookService bookService = BookService();
   Map<String, dynamic>? userData;
+
   Future<void> fetchUserData() async {
     try {
       final response = await apiService.getCurrentUser();
-      _logger.e("User Datadfsfsf: $response");
+      _logger.e("User Data: $response");
       setState(() {
         userData = response;
       });
-      _logger.e("User Datadfsfsf: $userData");
+      _logger.e("User Data: $userData");
     } catch (error) {
       // Handle error, e.g., show a snackbar
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -85,15 +85,35 @@ class _ELibState extends State<ELib> {
     }
   }
 
+  Future<void> fetchBooks() async {
+    try {
+      final response = await bookService.getAllBooks(1); // Assuming page 1
+      setState(() {
+        books = response['data']['allBooks'];
+        isLoading = false;
+        isError = false;
+      });
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+        isError = true;
+      });
+      _logger.e('Failed to load books: $error');
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('Failed to load books: $error'),
+      ));
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     fetchUserData();
+    fetchBooks();
   }
 
   @override
   Widget build(BuildContext context) {
-    const String baseUrl = "http://localhost:3000/";
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
@@ -205,10 +225,8 @@ class _ELibState extends State<ELib> {
             ),
             InkWell(
               onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const FavoriteBooks()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => BookListScreen()));
               },
               child: const ListTile(
                 leading: Icon(MyFlutterApp.home),
@@ -264,178 +282,204 @@ class _ELibState extends State<ELib> {
           ],
         ),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              CarouselSlider(
-                carouselController: controller,
-                items: [
-                  buildCarouselItem('cover_imgs/mistborn_slide.png', 'Mistborn',
-                      'Brandon Sanderson'),
-                  buildCarouselItem('cover_imgs/lordofrings_slide.png',
-                      'Lord of the Rings', 'J.R.R. Tolkien'),
-                  buildCarouselItem('cover_imgs/nameofwind_slide.png',
-                      'Name of the Wind', 'Patrick Rothfuss'),
-                ],
-                options: CarouselOptions(
-                  height: 180.0,
-                  enlargeCenterPage: true,
-                  autoPlay: true,
-                  aspectRatio: 16 / 9,
-                  autoPlayCurve: Curves.fastOutSlowIn,
-                  enableInfiniteScroll: true,
-                  autoPlayAnimationDuration: const Duration(milliseconds: 800),
-                  viewportFraction: 0.8,
-                  onPageChanged: (index, reason) {
-                    setState(() {
-                      currentIndex = index;
-                    });
-                  },
-                ),
-              ),
-              Positioned(
-                bottom: 6.0,
-                left: 100.0,
-                child: DotsIndicator(
-                  dotsCount: 3,
-                  position: currentIndex,
-                  onTap: (position) {
-                    controller.animateToPage(position);
-                  },
-                  decorator: DotsDecorator(
-                    color: const Color.fromARGB(255, 218, 200, 202),
-                    activeColor: const Color.fromARGB(255, 179, 144, 149),
-                    size: const Size.square(8.0),
-                    activeSize: const Size(14, 8),
-                    activeShape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(
-            height: 52,
-            child: ListView.builder(
-              itemCount: genres.length,
-              shrinkWrap: true,
-              scrollDirection: Axis.horizontal,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => ELib(
-                                  isLoggedIn: widget.isLoggedIn,
-                                  logout: widget.logout)));
-                    },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.resolveWith(
-                        (states) {
-                          if (states.contains(MaterialState.pressed)) {
-                            return null;
-                          }
-                          return const Color.fromARGB(255, 219, 254, 250);
-                        },
-                      ),
-                      shape: MaterialStateProperty.all(
-                        RoundedRectangleBorder(
-                          side: const BorderSide(
-                              color: Color.fromARGB(255, 0, 21, 44)),
-                          borderRadius: BorderRadius.circular(40),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : isError
+              ? Center(child: Text('Failed to load books'))
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Stack(
+                      alignment: Alignment.topCenter,
+                      children: [
+                        CarouselSlider(
+                          carouselController: controller,
+                          items: [
+                            buildCarouselItem('cover_imgs/mistborn_slide.png',
+                                'Mistborn', 'Brandon Sanderson'),
+                            buildCarouselItem(
+                                'cover_imgs/lordofrings_slide.png',
+                                'Lord of the Rings',
+                                'J.R.R. Tolkien'),
+                            buildCarouselItem('cover_imgs/nameofwind_slide.png',
+                                'Name of the Wind', 'Patrick Rothfuss'),
+                          ],
+                          options: CarouselOptions(
+                            height: 180.0,
+                            enlargeCenterPage: true,
+                            autoPlay: true,
+                            aspectRatio: 16 / 9,
+                            autoPlayCurve: Curves.fastOutSlowIn,
+                            enableInfiniteScroll: true,
+                            autoPlayAnimationDuration:
+                                const Duration(milliseconds: 800),
+                            viewportFraction: 0.8,
+                            onPageChanged: (index, reason) {
+                              setState(() {
+                                currentIndex = index;
+                              });
+                            },
+                          ),
                         ),
-                      ),
-                      overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                        (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.pressed)) {
-                            return const Color.fromARGB(255, 17, 106, 136);
-                          }
-                          return const Color.fromARGB(255, 219, 254, 250);
-                        },
-                      ),
-                    ),
-                    child: Text(
-                      genres[index],
-                      style: const TextStyle(
-                        color: Color.fromARGB(255, 0, 21, 44),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Flexible(
-            child: GridView.builder(
-              itemCount: booksImgs.length,
-              scrollDirection: Axis.vertical,
-              shrinkWrap: true,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 0,
-                  mainAxisSpacing: 4,
-                  mainAxisExtent: 300),
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => const BookDetail()));
-                    },
-                    child: Card(
-                      shadowColor: const Color.fromARGB(255, 17, 106, 136),
-                      surfaceTintColor:
-                          const Color.fromARGB(255, 219, 254, 250),
-                      color: const Color.fromARGB(255, 219, 254, 250),
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
-                        child: Column(
-                          children: [
-                            Flexible(
-                              child: Container(
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(50),
-                                    image: DecorationImage(
-                                        image: AssetImage(booksImgs[index]))),
+                        Positioned(
+                          bottom: 6.0,
+                          left: 100.0,
+                          child: DotsIndicator(
+                            dotsCount: 3,
+                            position: currentIndex,
+                            onTap: (position) {
+                              controller.animateToPage(position);
+                            },
+                            decorator: DotsDecorator(
+                              color: const Color.fromARGB(255, 218, 200, 202),
+                              activeColor:
+                                  const Color.fromARGB(255, 179, 144, 149),
+                              size: const Size.square(8.0),
+                              activeSize: const Size(14, 8),
+                              activeShape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
                               ),
                             ),
-                            const Text(
-                              "Name of the Wind",
-                              style: TextStyle(
-                                  color: Color.fromARGB(255, 0, 21, 44),
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  fontFamily: 'Sedan'),
-                            ),
-                            const Text(
-                              " Patrick Rothfuss",
-                              style: TextStyle(
-                                  color: Color.fromARGB(255, 0, 21, 44),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.normal,
-                                  fontFamily: 'Dosis'),
-                            )
-                          ],
+                          ),
                         ),
+                      ],
+                    ),
+                    SizedBox(
+                      height: 45,
+                      child: ListView.builder(
+                        itemCount: genres.length,
+                        shrinkWrap: true,
+                        scrollDirection: Axis.horizontal,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
+                            child: ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => ELib(
+                                            isLoggedIn: widget.isLoggedIn,
+                                            logout: widget.logout)));
+                              },
+                              style: ButtonStyle(
+                                backgroundColor:
+                                    MaterialStateProperty.resolveWith(
+                                  (states) {
+                                    if (states
+                                        .contains(MaterialState.pressed)) {
+                                      return null;
+                                    }
+                                    return const Color.fromARGB(
+                                        255, 219, 254, 250);
+                                  },
+                                ),
+                                shape: MaterialStateProperty.all(
+                                  RoundedRectangleBorder(
+                                    side: const BorderSide(
+                                        color: Color.fromARGB(255, 0, 21, 44)),
+                                    borderRadius: BorderRadius.circular(40),
+                                  ),
+                                ),
+                                overlayColor:
+                                    MaterialStateProperty.resolveWith<Color?>(
+                                  (Set<MaterialState> states) {
+                                    if (states
+                                        .contains(MaterialState.pressed)) {
+                                      return const Color.fromARGB(
+                                          255, 17, 106, 136);
+                                    }
+                                    return const Color.fromARGB(
+                                        255, 219, 254, 250);
+                                  },
+                                ),
+                              ),
+                              child: Text(
+                                genres[index],
+                                style: const TextStyle(
+                                  color: Color.fromARGB(255, 0, 21, 44),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
+                    Flexible(
+                      child: GridView.builder(
+                        itemCount: books.length,
+                        scrollDirection: Axis.vertical,
+                        shrinkWrap: true,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 0,
+                                mainAxisSpacing: 4,
+                                mainAxisExtent: 400),
+                        itemBuilder: (context, index) {
+                          final book = books[index];
+                          final bookCoverUrl = baseUrl + book['bookCover'];
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            const BookDetail()));
+                              },
+                              child: Card(
+                                shadowColor:
+                                    const Color.fromARGB(255, 17, 106, 136),
+                                surfaceTintColor:
+                                    const Color.fromARGB(255, 219, 254, 250),
+                                color: const Color.fromARGB(255, 219, 254, 250),
+                                child: Padding(
+                                  padding:
+                                      const EdgeInsets.fromLTRB(0, 8, 0, 4),
+                                  child: Column(
+                                    children: [
+                                      Flexible(
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                              image: DecorationImage(
+                                                  image: NetworkImage(
+                                                      bookCoverUrl),
+                                                  fit: BoxFit.fill)),
+                                        ),
+                                      ),
+                                      Text(
+                                        book['bookTitle'],
+                                        style: const TextStyle(
+                                            color:
+                                                Color.fromARGB(255, 0, 21, 44),
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                            fontFamily: 'Sedan'),
+                                      ),
+                                      const Text(
+                                        "Author Name",
+                                        style: TextStyle(
+                                            color:
+                                                Color.fromARGB(255, 0, 21, 44),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                            fontFamily: 'Dosis'),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() => selectedIndex = 0);

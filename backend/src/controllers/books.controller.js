@@ -7,31 +7,27 @@ import path from 'path';
 
 
 const uploadBooks = asyncHandler(async (req, res) => {
-    const bookTitle = req.body;
-    const bookPath = req.file?.path;
+    const { bookTitle } = req.body;
+    const bookPath = req.files?.bookPath[0].path.split('public\\').pop().replace(/\\/g, '/'); // Adjusting the path format
+    const bookCoverPath = req.files?.bookCover[0].path.split('public\\').pop().replace(/\\/g, '/'); // Adjusting the path format
 
-    try {
-        if (!bookTitle || !bookPath) {
-            throw new ApiError(400, "All fields are required")
-        }
-        const book = await Books.create({
-            bookTitle,
-            bookPath,
-            publishedBy: req.user
-        })
-
-        if(!book){
-            throw new ApiError(402, "Something went wrong while uploading the book")
-        }
-
-        return res.status(200).json(new ApiResponse(200,
-            { book },
-            'book uploaded successfully'
-        ));
-    } catch (error) {
-        throw new ApiError(500, "Something went wrong, couldn't upload the book")
+    if (!bookTitle || !bookPath || !bookCoverPath) {
+        throw new ApiError(400, "All fields are required");
     }
-}) 
+
+    const book = await Books.create({
+        bookTitle,
+        bookPath,
+        bookCover: bookCoverPath,
+        publishedBy: req.user._id
+    });
+
+    if (!book) {
+        throw new ApiError(402, "Something went wrong while uploading the book");
+    }
+
+    return res.status(200).json(new ApiResponse(200, { book }, 'Book uploaded successfully'));
+});
 
 const getAllBooks = asyncHandler(async (req, res) => {
     try {
@@ -80,34 +76,31 @@ const getAllBooks = asyncHandler(async (req, res) => {
         }
     })
 
-const deleteBook = asyncHandler(async (req, res) => {
-    const bookId = req.params.bookId;
-    try {
-        const bookDeleted = await Books.findOneAndDelete({ _id: bookId });
-        if (!bookDeleted) {
-            throw new ApiError(400, "book not deleted")
+    const deleteBook = asyncHandler(async (req, res) => {
+        const bookId = req.params.bookId;
+        try {
+            const bookDeleted = await Books.findOneAndDelete({ _id: bookId });
+            if (!bookDeleted) {
+                throw new ApiError(400, "Book not deleted");
+            }
+    
+            const filePath = bookDeleted.bookPath; 
+            if (filePath) {
+                fs.unlinkSync(filePath); 
+            }
+    
+            return res.status(200).json(
+                new ApiResponse(
+                    200,
+                    {},
+                    "Book deleted successfully"
+                )
+            );
+        } catch (error) {
+            throw new ApiError(500, error?.message || "Something went wrong");
         }
-
-        const filePath = bookDeleted.bookPath; 
-
-        if (filePath) {
-            fs.unlinkSync(filePath); 
-        }
-
-        return res.status(200).json(
-            new ApiResponse(
-                200,
-                {},
-                "Book deleted Successfully"
-            )
-        )
-    } catch (error) {
-        throw new ApiError(500, error?.message || "Something went Wrong")
-    }
-
-}
-
-)
+    });
+    
 
 export {
     uploadBooks,
