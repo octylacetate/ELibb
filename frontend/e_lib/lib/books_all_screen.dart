@@ -279,7 +279,10 @@ class _BooksallState extends State<Booksall> {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) => BookDetail()));
+                                          builder: (context) =>
+                                              BookDetailScreen(
+                                                bookId: '',
+                                              )));
                                 },
                                 child: Card(
                                   shadowColor:

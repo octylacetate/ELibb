@@ -17,7 +17,7 @@ router.route("/upload-book").post(verifyJWT, upload.fields([
     { name: 'bookCover', maxCount: 1 }
 ]), uploadBooks);
 router.route("/get-books").get(verifyJWT, getAllBooks);
-router.route("/get-book").get(verifyJWT, getOneBook);
+router.route("/get-book/:bookId").get(verifyJWT, getOneBook);
 router.route("/delete-book/:bookId").delete(verifyJWT, isPublisher, deleteBook)
 
 export default router;

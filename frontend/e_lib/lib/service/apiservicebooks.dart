@@ -23,16 +23,21 @@ class BookService {
   }
 
   Future<Map<String, dynamic>> uploadBook(
-      String bookTitle,
-      Uint8List bookBytes,
-      String bookFileName,
-      Uint8List bookCoverBytes,
-      String bookCoverFileName) async {
+    String bookTitle,
+    Uint8List bookBytes,
+    String bookFileName,
+    Uint8List bookCoverBytes,
+    String bookCoverFileName,
+    String author,
+    String description,
+  ) async {
     final url = Uri.parse('${baseUrl}upload-book');
     var request = http.MultipartRequest('POST', url);
 
     try {
       request.fields['bookTitle'] = bookTitle;
+      request.fields['author'] = author;
+      request.fields['description'] = description;
       request.files.add(http.MultipartFile.fromBytes('bookPath', bookBytes,
           filename: bookFileName));
       request.files.add(http.MultipartFile.fromBytes(
@@ -92,6 +97,9 @@ class BookService {
 
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
+      } else if (response.statusCode == 401) {
+        // Handle unauthorized error
+        throw Exception('Unauthorized. Please log in again.');
       } else {
         final errorData = jsonDecode(response.body);
         _logger.e('Failed to fetch book: ${errorData['message']}');
@@ -106,7 +114,7 @@ class BookService {
   Future<void> deleteBook(String bookId) async {
     final url = Uri.parse('${baseUrl}delete-book/$bookId');
     final headers = await _getHeaders();
-
+    _logger.d('deleeeeteee id of book: $bookId');
     try {
       final response = await http.delete(url, headers: headers);
       _logger.d('Received response with status code: ${response.statusCode}');
@@ -115,9 +123,14 @@ class BookService {
       if (response.statusCode == 200) {
         _logger.i('Book deleted successfully');
       } else {
-        final errorData = jsonDecode(response.body);
-        _logger.e('Failed to delete book: ${errorData['message']}');
-        throw Exception('Failed to delete book: ${errorData['message']}');
+        try {
+          final errorData = jsonDecode(response.body);
+          _logger.e('Failed to delete book: ${errorData['message']}');
+          throw Exception('Failed to delete book: ${errorData['message']}');
+        } catch (e) {
+          _logger.e('Failed to delete book: ${response.body}');
+          throw Exception('Failed to delete book: ${response.body}');
+        }
       }
     } catch (e) {
       _logger.e('An error occurred: $e');

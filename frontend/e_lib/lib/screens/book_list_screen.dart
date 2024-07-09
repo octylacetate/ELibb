@@ -76,6 +76,13 @@ class _BookListScreenState extends State<BookListScreen> {
                         : AssetImage('assets/logo/cat.jpeg') as ImageProvider,
                   ),
                   title: Text(book['bookTitle']),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Author: ${book['author']}'),
+                      Text('Description: ${book['description']}'),
+                    ],
+                  ),
                   trailing: IconButton(
                     icon: Icon(Icons.delete, color: Colors.red),
                     onPressed: () => deleteBook(book['_id']),

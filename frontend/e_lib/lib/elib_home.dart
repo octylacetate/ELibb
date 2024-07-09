@@ -424,10 +424,12 @@ class _ELibState extends State<ELib> {
                             child: InkWell(
                               onTap: () {
                                 Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            const BookDetail()));
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        BookDetailScreen(bookId: book['_id']),
+                                  ),
+                                );
                               },
                               child: Card(
                                 shadowColor:
@@ -443,32 +445,33 @@ class _ELibState extends State<ELib> {
                                       Flexible(
                                         child: Container(
                                           decoration: BoxDecoration(
-                                              borderRadius:
-                                                  BorderRadius.circular(20),
-                                              image: DecorationImage(
-                                                  image: NetworkImage(
-                                                      bookCoverUrl),
-                                                  fit: BoxFit.fill)),
+                                            borderRadius:
+                                                BorderRadius.circular(20),
+                                            image: DecorationImage(
+                                              image: NetworkImage(bookCoverUrl),
+                                              fit: BoxFit.fill,
+                                            ),
+                                          ),
                                         ),
                                       ),
                                       Text(
                                         book['bookTitle'],
                                         style: const TextStyle(
-                                            color:
-                                                Color.fromARGB(255, 0, 21, 44),
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            fontFamily: 'Sedan'),
+                                          color: Color.fromARGB(255, 0, 21, 44),
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Sedan',
+                                        ),
                                       ),
-                                      const Text(
-                                        "Author Name",
-                                        style: TextStyle(
-                                            color:
-                                                Color.fromARGB(255, 0, 21, 44),
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                            fontFamily: 'Dosis'),
-                                      )
+                                      Text(
+                                        book['author'] ?? "Unknown Author",
+                                        style: const TextStyle(
+                                          color: Color.fromARGB(255, 0, 21, 44),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.normal,
+                                          fontFamily: 'Dosis',
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),

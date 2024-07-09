@@ -354,6 +354,4 @@ class ApiService {
       throw Exception('Failed to fetch read history');
     }
   }
-
-  getAllBooks(int i) {}
 }

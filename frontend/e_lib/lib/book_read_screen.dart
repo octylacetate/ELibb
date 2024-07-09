@@ -1,30 +1,53 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:pdfx/pdfx.dart';
+import 'package:http/http.dart' as http;
 
 class BookRead extends StatefulWidget {
-  const BookRead({super.key});
+  final String bookUrl; // Network URL for the PDF
+
+  const BookRead({required this.bookUrl, Key? key}) : super(key: key);
 
   @override
   State<BookRead> createState() => _BookReadState();
 }
 
 class _BookReadState extends State<BookRead> {
-  late PDFViewController pdfViewController;
-  final pdfController = PdfController(
-    document: PdfDocument.openAsset('assets/sample.pdf'),
-  );
-  static const int _initialPage = 2;
-
   late PdfController _pdfController;
-  bool _isSampleDoc = true;
+  bool _isLoading = true;
+
   @override
   void initState() {
     super.initState();
-    _pdfController = PdfController(
-      document: PdfDocument.openAsset('assets/books/Atomichabits.pdf'),
-      initialPage: _initialPage,
-    );
+    _initializePdfController();
+  }
+
+  Future<void> _initializePdfController() async {
+    try {
+      _pdfController = PdfController(
+        document: PdfDocument.openData(
+          await fetchPdf(widget.bookUrl),
+        ),
+      );
+      setState(() {
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading PDF: $e');
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<Uint8List> fetchPdf(String url) async {
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      return response.bodyBytes;
+    } else {
+      throw Exception('Failed to load PDF');
+    }
   }
 
   @override
@@ -37,7 +60,7 @@ class _BookReadState extends State<BookRead> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 219, 254, 250),
+        backgroundColor: const Color.fromARGB(255, 219, 254, 250),
         actions: <Widget>[
           IconButton(
             icon: const Icon(Icons.navigate_before),
@@ -67,72 +90,14 @@ class _BookReadState extends State<BookRead> {
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              if (_isSampleDoc) {
-                _pdfController.loadDocument(
-                    PdfDocument.openAsset('assets/books/Atomichabits.pdf'));
-              } else {
-                _pdfController.loadDocument(
-                    PdfDocument.openAsset('assets/books/Atomichabits.pdf'));
-              }
-              _isSampleDoc = !_isSampleDoc;
-            },
-          ),
         ],
       ),
-      body:
-          // PDFView(
-          //   filePath: 'assets/books/Atomichabits.pdf',
-          //   autoSpacing: true,
-          //   enableSwipe: true,
-          //   pageSnap: true,
-          //   swipeHorizontal: true,
-          //   onError: (error) {
-          //     debugPrint(error);
-          //   },
-          //   onPageError: (page, error) {
-          //     debugPrint('$page: ${error.toString()}');
-          //   },
-          //   onViewCreated: (PDFViewController vc) {
-          //     pdfViewController = vc;
-          //   },
-          //   onPageChanged: (int? page, int? total) {
-          //     debugPrint('page change: $page/n $total');
-          //   },
-          // ),
-          PdfView(
-        scrollDirection: Axis.vertical,
-        builders: PdfViewBuilders<DefaultBuilderOptions>(
-          options: const DefaultBuilderOptions(),
-          documentLoaderBuilder: (_) =>
-              const Center(child: CircularProgressIndicator()),
-          pageLoaderBuilder: (_) =>
-              const Center(child: CircularProgressIndicator()),
-          pageBuilder: _pageBuilder,
-        ),
-        controller: _pdfController,
-      ),
-    );
-  }
-
-  PhotoViewGalleryPageOptions _pageBuilder(
-    BuildContext context,
-    Future<PdfPageImage> pageImage,
-    int index,
-    PdfDocument document,
-  ) {
-    return PhotoViewGalleryPageOptions(
-      imageProvider: PdfPageImageProvider(
-        pageImage,
-        index,
-        document.id,
-      ),
-      minScale: PhotoViewComputedScale.contained * 1,
-      maxScale: PhotoViewComputedScale.contained * 2,
-      initialScale: PhotoViewComputedScale.contained * 1.0,
-      heroAttributes: PhotoViewHeroAttributes(tag: '${document.id}-$index'),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : PdfView(
+              scrollDirection: Axis.vertical,
+              controller: _pdfController,
+            ),
     );
   }
 }

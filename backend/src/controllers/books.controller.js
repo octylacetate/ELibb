@@ -1,10 +1,13 @@
-import { asyncHandler } from "../utils/asyncHandler.js";
-import { ApiError } from "../utils/ApiError.js"
-import { Books } from "../models/books.model.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { fileURLToPath } from 'url';
+import path from 'path';
 import fs from 'fs';
-import path from 'path'; 
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiError } from '../utils/ApiError.js';
+import { Books } from '../models/books.model.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const uploadBooks = asyncHandler(async (req, res) => {
     const { bookTitle, author, description } = req.body;
@@ -57,51 +60,48 @@ const getAllBooks = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Something went wrong, couldn't get the books");
     }})
 
-    const getOneBook = asyncHandler( async (req, res) => {
+    const getOneBook = asyncHandler(async (req, res) => {
         try {
-           const bookId = re.param.bookId;
-            
-            const book = await Books.findById(bookId)
-
-            if(!book){
-                throw new ApiError(401, "Book doesn't exists")
-            }
-            return res.status(200).json(
-                new ApiResponse(
-                    200,
-                    { book },
-                    "Book deleted Successfully"
-                )
+          const bookId = req.params.bookId;  // Corrected here
+      
+          const book = await Books.findOne({ _id: bookId });
+      
+          if (!book) {
+            throw new ApiError(404, "Book doesn't exist");  // Changed to 404
+          }
+          return res.status(200).json(
+            new ApiResponse(
+              200,
+              { book },
+              "Book fetched successfully"
             )
+          );
         } catch (error) {
-            throw new ApiError(401, "Something went wrong, Book doesn't exists")
+          throw new ApiError(500, "Something went wrong, couldn't get the book");  // Changed to 500
         }
-    })
+      });
+      
 
     const deleteBook = asyncHandler(async (req, res) => {
         const bookId = req.params.bookId;
         try {
-            const bookDeleted = await Books.findOneAndDelete({ _id: bookId });
-            if (!bookDeleted) {
-                throw new ApiError(400, "Book not deleted");
-            }
-    
-            const filePath = bookDeleted.bookPath; 
-            if (filePath) {
-                fs.unlinkSync(filePath); 
-            }
-    
-            return res.status(200).json(
-                new ApiResponse(
-                    200,
-                    {},
-                    "Book deleted successfully"
-                )
-            );
+          const bookDeleted = await Books.findOneAndDelete({ _id: bookId });
+          if (!bookDeleted) {
+            throw new ApiError(400, "Book not deleted");
+          }
+      
+          const filePath = path.join(__dirname, '../../public', bookDeleted.bookPath);
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          } else {
+            console.log(`File not found: ${filePath}`);
+          }
+      
+          return res.status(200).json(new ApiResponse(200, {}, "Book deleted successfully"));
         } catch (error) {
-            throw new ApiError(500, error?.message || "Something went wrong");
+          return res.status(500).json(new ApiResponse(500, {}, error.message || "Something went wrong"));
         }
-    });
+      });
     
 
 export {

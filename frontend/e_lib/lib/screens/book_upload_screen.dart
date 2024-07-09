@@ -11,6 +11,8 @@ class BookUploadScreen extends StatefulWidget {
 
 class _BookUploadScreenState extends State<BookUploadScreen> {
   final TextEditingController _bookTitleController = TextEditingController();
+  final TextEditingController _authorController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
   final BookService bookService = BookService();
   final Logger _logger = Logger();
   Uint8List? _bookBytes;
@@ -51,21 +53,33 @@ class _BookUploadScreenState extends State<BookUploadScreen> {
 
   void _uploadBook() async {
     final bookTitle = _bookTitleController.text;
+    final author = _authorController.text;
+    final description = _descriptionController.text;
 
-    if (_bookBytes == null ||
+    if (bookTitle.isEmpty ||
+        author.isEmpty ||
+        description.isEmpty ||
+        _bookBytes == null ||
         _bookFileName == null ||
         _bookCoverBytes == null ||
         _bookCoverFileName == null) {
-      _logger.e('Book file or cover is not selected');
+      _logger.e('All fields are required');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Book file or cover is not selected')),
+        SnackBar(content: Text('All fields are required')),
       );
       return;
     }
 
     try {
-      final response = await bookService.uploadBook(bookTitle, _bookBytes!,
-          _bookFileName!, _bookCoverBytes!, _bookCoverFileName!);
+      final response = await bookService.uploadBook(
+        bookTitle,
+        _bookBytes!,
+        _bookFileName!,
+        _bookCoverBytes!,
+        _bookCoverFileName!,
+        author,
+        description,
+      );
       if (response['statusCode'] == 200) {
         _logger.i('Book uploaded successfully');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -99,6 +113,15 @@ class _BookUploadScreenState extends State<BookUploadScreen> {
             TextField(
               controller: _bookTitleController,
               decoration: InputDecoration(labelText: 'Book Title'),
+            ),
+            TextField(
+              controller: _authorController,
+              decoration: InputDecoration(labelText: 'Author'),
+            ),
+            TextField(
+              controller: _descriptionController,
+              decoration: InputDecoration(labelText: 'Description'),
+              maxLines: 3,
             ),
             SizedBox(height: 20),
             ElevatedButton(
