@@ -90,11 +90,17 @@ const getAllBooks = asyncHandler(async (req, res) => {
             throw new ApiError(400, "Book not deleted");
           }
       
-          const filePath = path.join(__dirname, '../../public', bookDeleted.bookPath);
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-          } else {
-            console.log(`File not found: ${filePath}`);
+        //   const filePath = path.join(__dirname, '../../public', bookDeleted.bookPath);
+        //   if (fs.existsSync(filePath)) {
+        //     fs.unlinkSync(filePath);
+        //   } else {
+        //     console.log(`File not found: ${filePath}`);
+        //   }
+
+          const removedBook = fs.unlinkSync(bookDeleted.bookPath)
+
+          if(!removedBook){
+            throw new ApiError(402, "Book is removed from temp")
           }
       
           return res.status(200).json(new ApiResponse(200, {}, "Book deleted successfully"));
@@ -104,9 +110,34 @@ const getAllBooks = asyncHandler(async (req, res) => {
       });
     
 
+      const publishedBooks = asyncHandler( async (req, res) => {
+        try {
+
+            const userId = req.user._id.toString();
+            const publisherBooks = await Books.find({publishedBy: userId});
+
+            if (!publisherBooks || publisherBooks.length === 0) {
+              throw new ApiError(404, "User doesn't have any published books");
+          }
+            
+            return res.status(200).json(new ApiResponse(
+                200, 
+                { publisherBooks }, 
+                "Book retrieved successfully"
+            ));
+
+        } catch (error) {
+            return res.status(500).json(new ApiError(
+                500, 
+                error.message || "Something went wrong"
+            ));
+        }
+      });
+
 export {
     uploadBooks,
     getAllBooks,
     getOneBook,
-    deleteBook
+    deleteBook,
+    publishedBooks
 }
