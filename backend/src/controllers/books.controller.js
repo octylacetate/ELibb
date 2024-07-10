@@ -100,7 +100,7 @@ const getAllBooks = asyncHandler(async (req, res) => {
           const removedBook = fs.unlinkSync(bookDeleted.bookPath)
 
           if(!removedBook){
-            throw new ApiError(402, "Book is removed from temp")
+            throw new ApiError(402, "Book is not removed from temp")
           }
       
           return res.status(200).json(new ApiResponse(200, {}, "Book deleted successfully"));
