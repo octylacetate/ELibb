@@ -1,5 +1,4 @@
 import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:http/http.dart' as http;
@@ -14,7 +13,7 @@ class BookRead extends StatefulWidget {
 }
 
 class _BookReadState extends State<BookRead> {
-  late PdfController _pdfController;
+  PdfController? _pdfController;
   bool _isLoading = true;
 
   @override
@@ -25,10 +24,9 @@ class _BookReadState extends State<BookRead> {
 
   Future<void> _initializePdfController() async {
     try {
+      final pdfData = await fetchPdf(widget.bookUrl);
       _pdfController = PdfController(
-        document: PdfDocument.openData(
-          await fetchPdf(widget.bookUrl),
-        ),
+        document: PdfDocument.openData(pdfData),
       );
       setState(() {
         _isLoading = false;
@@ -52,7 +50,7 @@ class _BookReadState extends State<BookRead> {
 
   @override
   void dispose() {
-    _pdfController.dispose();
+    _pdfController?.dispose();
     super.dispose();
   }
 
@@ -62,41 +60,43 @@ class _BookReadState extends State<BookRead> {
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 219, 254, 250),
         actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.navigate_before),
-            onPressed: () {
-              _pdfController.previousPage(
-                curve: Curves.ease,
-                duration: const Duration(milliseconds: 100),
-              );
-            },
-          ),
-          PdfPageNumber(
-            controller: _pdfController,
-            builder: (_, loadingState, page, pagesCount) => Container(
-              alignment: Alignment.center,
-              child: Text(
-                '$page/${pagesCount ?? 0}',
-                style: const TextStyle(fontSize: 22),
+          if (_pdfController != null) ...[
+            IconButton(
+              icon: const Icon(Icons.navigate_before),
+              onPressed: () {
+                _pdfController?.previousPage(
+                  curve: Curves.ease,
+                  duration: const Duration(milliseconds: 100),
+                );
+              },
+            ),
+            PdfPageNumber(
+              controller: _pdfController!,
+              builder: (_, loadingState, page, pagesCount) => Container(
+                alignment: Alignment.center,
+                child: Text(
+                  '$page/${pagesCount ?? 0}',
+                  style: const TextStyle(fontSize: 22),
+                ),
               ),
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.navigate_next),
-            onPressed: () {
-              _pdfController.nextPage(
-                curve: Curves.ease,
-                duration: const Duration(milliseconds: 100),
-              );
-            },
-          ),
+            IconButton(
+              icon: const Icon(Icons.navigate_next),
+              onPressed: () {
+                _pdfController?.nextPage(
+                  curve: Curves.ease,
+                  duration: const Duration(milliseconds: 100),
+                );
+              },
+            ),
+          ],
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : PdfView(
               scrollDirection: Axis.vertical,
-              controller: _pdfController,
+              controller: _pdfController!,
             ),
     );
   }

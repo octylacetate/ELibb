@@ -51,10 +51,10 @@ class _BooksallState extends State<Booksall> {
     MyFlutterApp.library_icon,
     MyFlutterApp.supervisor_account,
   ];
+
   @override
   Widget build(BuildContext context) {
-    return //Genres
-        Scaffold(
+    return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 219, 254, 250),
         title: Row(
@@ -124,217 +124,183 @@ class _BooksallState extends State<Booksall> {
           )
         ],
       ),
-      body: Flexible(
-        child: Column(
-          children: [
-            SizedBox(
-              height: 5,
+      body: Column(
+        children: [
+          SizedBox(
+            height: 5,
+          ),
+          Align(
+            alignment: const Alignment(0.0, 0.0),
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  showMyBooks = !showMyBooks;
+                });
+              },
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.resolveWith(
+                  (states) {
+                    if (states.contains(MaterialState.pressed)) {
+                      return null;
+                    }
+                    return Color.fromARGB(255, 219, 254, 250);
+                  },
+                ),
+                shape: MaterialStateProperty.all(
+                  RoundedRectangleBorder(
+                    side: BorderSide(color: Color.fromARGB(255, 219, 254, 250)),
+                    borderRadius: BorderRadius.circular(40),
+                  ),
+                ),
+                overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                  (Set<MaterialState> states) {
+                    if (states.contains(MaterialState.pressed))
+                      return Color.fromARGB(255, 17, 106, 136);
+                    return Color.fromARGB(255, 219, 254, 250);
+                  },
+                ),
+              ),
+              child: Text(
+                showMyBooks ? 'Show Favorites' : 'Show Books',
+                style: TextStyle(
+                  color: Color.fromARGB(255, 0, 21, 44),
+                ),
+              ),
             ),
-            Align(
-                alignment: const Alignment(0.0, 0.0),
-                child: ElevatedButton(
-                    onPressed: () {
-                      setState(() {
-                        showMyBooks = !showMyBooks;
-                      });
+          ),
+          SizedBox(
+            height: 52,
+            child: ListView.builder(
+              itemCount: genres.length,
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
+                  child: InkWell(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ELib(
+                            isLoggedIn: true,
+                            logout: () async {},
+                          ),
+                        ),
+                      );
                     },
-                    style: ButtonStyle(
-                      backgroundColor: MaterialStateProperty.resolveWith(
-                        (states) {
-                          if (states.contains(MaterialState.pressed)) {
-                            return null;
-                          }
-                          return Color.fromARGB(255, 219, 254, 250);
-                        },
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      style: ButtonStyle(
+                        backgroundColor: MaterialStateProperty.resolveWith(
+                          (states) {
+                            if (states.contains(MaterialState.pressed)) {
+                              return null;
+                            }
+                            return Color.fromARGB(255, 219, 254, 250);
+                          },
+                        ),
+                        shape: MaterialStateProperty.all(
+                          RoundedRectangleBorder(
+                            side: BorderSide(
+                                color: Color.fromARGB(255, 0, 21, 44)),
+                            borderRadius: BorderRadius.circular(40),
+                          ),
+                        ),
+                        overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                          (Set<MaterialState> states) {
+                            if (states.contains(MaterialState.pressed))
+                              return Color.fromARGB(255, 17, 106, 136);
+                            return Color.fromARGB(255, 219, 254, 250);
+                          },
+                        ),
                       ),
-                      shape: MaterialStateProperty.all(RoundedRectangleBorder(
-                          side: BorderSide(
-                              color: Color.fromARGB(255, 219, 254, 250)),
-                          borderRadius: BorderRadius.circular(40))),
-                      overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                        (Set<MaterialState> states) {
-                          if (states.contains(MaterialState.pressed))
-                            return Color.fromARGB(
-                                255, 17, 106, 136); //<-- SEE HERE
-                          return Color.fromARGB(255, 219, 254,
-                              250); // Defer to the widget's default.
-                        },
+                      child: Text(
+                        genres[index],
+                        style: TextStyle(
+                          color: Color.fromARGB(255, 0, 21, 44),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      showMyBooks ? 'Show Favorites' : 'Show Books',
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 0, 21, 44),
-                      ),
-                    ))),
-            SizedBox(
-              height: 52,
-              child: ListView.builder(
-                itemCount: genres.length,
-                shrinkWrap: true,
-                scrollDirection: Axis.horizontal,
-                itemBuilder: (context, index) {
-                  return Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Column(children: [
-                          Expanded(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(8, 8, 0, 8),
-                                  child: InkWell(
-                                    onTap: () {
-                                      Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => ELib(
-                                                isLoggedIn: true,
-                                                logout: () async {}),
-                                          ));
-                                    },
-                                    child: Flexible(
-                                        child: ElevatedButton(
-                                            onPressed: () {},
-                                            style: ButtonStyle(
-                                              backgroundColor:
-                                                  MaterialStateProperty
-                                                      .resolveWith(
-                                                (states) {
-                                                  // If the button is pressed, return green, otherwise blue
-                                                  if (states.contains(
-                                                      MaterialState.pressed)) {
-                                                    return null;
-                                                  }
-                                                  return Color.fromARGB(
-                                                      255, 219, 254, 250);
-                                                },
-                                              ),
-                                              shape: MaterialStateProperty.all(
-                                                  RoundedRectangleBorder(
-                                                      side: BorderSide(
-                                                          color: Color.fromARGB(
-                                                              255, 0, 21, 44)),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              40))),
-                                              overlayColor:
-                                                  MaterialStateProperty
-                                                      .resolveWith<Color?>(
-                                                (Set<MaterialState> states) {
-                                                  if (states.contains(
-                                                      MaterialState.pressed))
-                                                    return Color.fromARGB(
-                                                        255,
-                                                        17,
-                                                        106,
-                                                        136); //<-- SEE HERE
-                                                  return Color.fromARGB(
-                                                      255,
-                                                      219,
-                                                      254,
-                                                      250); // Defer to the widget's default.
-                                                },
-                                              ),
-                                            ),
-                                            child: Text(
-                                              genres[index],
-                                              style: TextStyle(
-                                                color: Color.fromARGB(
-                                                    255, 0, 21, 44),
-                                              ),
-                                            ))),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ]),
-                      ]);
-                },
-              ),
+                  ),
+                );
+              },
             ),
-            Flexible(
-              child: SizedBox(
-                child: showMyBooks
-                    ? GridView.builder(
-                        itemCount: books_imgs.length,
-
-                        scrollDirection: Axis.vertical,
-                        shrinkWrap: true,
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 0,
-                            mainAxisSpacing: 4,
-                            mainAxisExtent: 300),
-
-                        // Your MasonryGridView builder here
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
-                            child: InkWell(
-                                onTap: () {
-                                  Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              BookDetailScreen(
-                                                bookId: '',
-                                              )));
-                                },
-                                child: Card(
-                                  shadowColor:
-                                      Color.fromARGB(255, 17, 106, 136),
-                                  surfaceTintColor:
-                                      Color.fromARGB(255, 219, 254, 250),
-                                  color: Color.fromARGB(255, 219, 254, 250),
-                                  child: Padding(
-                                    padding:
-                                        const EdgeInsets.fromLTRB(0, 8, 0, 4),
-                                    child: Column(
-                                      children: [
-                                        Flexible(
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                                borderRadius:
-                                                    BorderRadius.circular(50),
-                                                image: DecorationImage(
-                                                    image: AssetImage(
-                                                        books_imgs[index]))),
-                                          ),
-                                        ),
-                                        Text(
-                                          "Name of the Wind",
-                                          style: TextStyle(
-                                              color: Color.fromARGB(
-                                                  255, 0, 21, 44),
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              fontFamily: 'Sedan'),
-                                        ),
-                                        Text(
-                                          " Patrick Rothfuss",
-                                          style: TextStyle(
-                                              color: Color.fromARGB(
-                                                  255, 0, 21, 44),
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                              fontFamily: 'Dosis'),
-                                        )
-                                      ],
+          ),
+          Flexible(
+            child: showMyBooks
+                ? GridView.builder(
+                    itemCount: books_imgs.length,
+                    scrollDirection: Axis.vertical,
+                    shrinkWrap: true,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 0,
+                      mainAxisSpacing: 4,
+                      mainAxisExtent: 300,
+                    ),
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookDetailScreen(
+                                  bookId: '', // Pass the actual book ID here
+                                ),
+                              ),
+                            );
+                          },
+                          child: Card(
+                            shadowColor: Color.fromARGB(255, 17, 106, 136),
+                            surfaceTintColor:
+                                Color.fromARGB(255, 219, 254, 250),
+                            color: Color.fromARGB(255, 219, 254, 250),
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(0, 8, 0, 4),
+                              child: Column(
+                                children: [
+                                  Container(
+                                    height: 200,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(50),
+                                      image: DecorationImage(
+                                        image: AssetImage(books_imgs[index]),
+                                        fit: BoxFit.cover,
+                                      ),
                                     ),
                                   ),
-                                )),
-                          );
-                        },
-                      )
-                    : FavoriteBooks(),
-              ),
-            )
-          ],
-        ),
+                                  Text(
+                                    "Name of the Wind",
+                                    style: TextStyle(
+                                      color: Color.fromARGB(255, 0, 21, 44),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      fontFamily: 'Sedan',
+                                    ),
+                                  ),
+                                  Text(
+                                    " Patrick Rothfuss",
+                                    style: TextStyle(
+                                      color: Color.fromARGB(255, 0, 21, 44),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.normal,
+                                      fontFamily: 'Dosis',
+                                    ),
+                                  )
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  )
+                : FavoriteBooks(),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {

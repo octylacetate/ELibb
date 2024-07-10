@@ -1,3 +1,4 @@
+import 'package:e_lib/service/apiservicefavorites.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -16,9 +17,11 @@ class BookDetailScreen extends StatefulWidget {
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
   final BookService bookService = BookService();
+  final FavouriteService favouriteService = FavouriteService();
   final Logger _logger = Logger();
   bool isLoading = true;
   bool isError = false;
+  bool isFavourite = false;
   Map<String, dynamic>? book;
   final String baseUrl = "http://localhost:3000/";
 
@@ -39,6 +42,29 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('Failed to load book details: $error'),
       ));
+    }
+  }
+
+  Future<void> toggleFavourite() async {
+    try {
+      if (isFavourite) {
+        await favouriteService.removeFavourite(widget.bookId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Removed from favourites')),
+        );
+      } else {
+        await favouriteService.addFavourite(widget.bookId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Added to favourites')),
+        );
+      }
+      setState(() {
+        isFavourite = !isFavourite;
+      });
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update favourite status: $error')),
+      );
     }
   }
 
@@ -112,11 +138,11 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 IconButton(
-                                  onPressed: () {
-                                    // Handle favorite toggle
-                                  },
+                                  onPressed: toggleFavourite,
                                   icon: Icon(
-                                    Icons.favorite_border_outlined,
+                                    isFavourite
+                                        ? Icons.favorite
+                                        : Icons.favorite_border_outlined,
                                   ),
                                 ),
                                 const Padding(padding: EdgeInsets.all(4)),
