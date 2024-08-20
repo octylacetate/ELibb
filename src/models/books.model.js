@@ -16,6 +16,17 @@ const bookSchema = mongoose.Schema({
         required: true
     },
 
+    author: {
+        type: String,
+        required: true,
+        default: "Unknown"
+    },
+
+    description: {
+        type: String,
+        required: true
+    },
+
     publishedBy:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
@@ -40,3 +51,5 @@ const bookSchema = mongoose.Schema({
 },{timestamps: true})
 
 const Books = mongoose.model("Books", bookSchema)
+
+export {Books}

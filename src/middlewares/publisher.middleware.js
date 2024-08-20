@@ -1,22 +1,20 @@
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import {Books} from "../models/books.model.js";
+import { Books } from "../models/books.model.js";
 
-
-export const isPublisher = asyncHandler( async (req, res, next)=>{
-try {
+export const isPublisher = asyncHandler(async (req, res, next) => {
+    try {
         const bookId = req.params.bookId;
-    
+
         const uploadedBook = await Books.findById(bookId);
-    
-        const publisher = (uploadedBook.publishedBy === req.user._id)
-    
-        if(!publisher){
-           throw new ApiError(402, "Only publisher can modify the file")
+        if (!uploadedBook) {
+            throw new ApiError(404, "Book not found");
         }
-    
-        next()
-} catch (error) {
-    throw new ApiError(401, error?.message || "Access Denied!!!");
-}
+        if (uploadedBook.publishedBy.toString() !== req.user._id.toString()) {
+            throw new ApiError(403, "Only the publisher can modify the file");
+        }
+        next();
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Access Denied");
+    }
 });
