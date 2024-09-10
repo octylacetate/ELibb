@@ -1,8 +1,10 @@
 import 'package:e_lib/elib_home.dart';
+import 'package:e_lib/route_persistence.dart';
 import 'package:e_lib/signup.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:go_router/go_router.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -12,6 +14,7 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
+  final RoutePersistence routePersistence = RoutePersistence();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -60,6 +63,7 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
+    routePersistence.saveLastRoute('/login');
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -165,7 +169,7 @@ class _LoginState extends State<Login> {
                       height: 40,
                       width: 200,
                       child: ElevatedButton(
-                        onPressed: () => _login(context),
+                        onPressed: () => {_login(context), context.go('/home')},
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
                           backgroundColor: Color.fromARGB(255, 0, 21, 44),
@@ -183,10 +187,11 @@ class _LoginState extends State<Login> {
                     SizedBox(height: 25),
                     Center(
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
+                        onPressed: () => {
+                          Navigator.push(
+                            context,
                             MaterialPageRoute(builder: (context) => Signup()),
-                          );
+                          )
                         },
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,

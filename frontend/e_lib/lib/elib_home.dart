@@ -1,3 +1,4 @@
+import 'package:e_lib/route_persistence.dart';
 import 'package:e_lib/screens/book_list_screen.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:e_lib/service/apiservicebooks.dart';
@@ -15,6 +16,7 @@ import 'help_icons.dart';
 import 'my_book.dart';
 import 'my_flutter_app_icons.dart';
 import 'profile.dart';
+import 'package:go_router/go_router.dart';
 
 class ELib extends StatefulWidget {
   final bool isLoggedIn;
@@ -28,6 +30,7 @@ class ELib extends StatefulWidget {
 }
 
 class _ELibState extends State<ELib> {
+  final RoutePersistence routePersistence = RoutePersistence();
   static final Logger _logger = Logger();
   CarouselController controller = CarouselController();
   bool isPressed = false;
@@ -114,6 +117,7 @@ class _ELibState extends State<ELib> {
 
   @override
   Widget build(BuildContext context) {
+    routePersistence.saveLastRoute('/home');
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(

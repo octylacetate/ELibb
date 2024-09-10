@@ -8,7 +8,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(cors({
-    origin: 'http://localhost:49577' ,   //frontend ki port dlni
+    origin: 'http://localhost:57616' ,   //frontend ki port dlni
     credentials: true 
 }));
 
