@@ -4,6 +4,7 @@ import 'package:e_lib/elib_home.dart';
 import 'package:e_lib/login.dart';
 import 'package:e_lib/my_flutter_app_icons.dart';
 import 'package:e_lib/profile.dart';
+import 'package:e_lib/route_persistence.dart';
 import 'package:e_lib/widgets/fav_books.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +19,8 @@ class Booksall extends StatefulWidget {
 }
 
 class _BooksallState extends State<Booksall> {
+  final RoutePersistence routePersistence = RoutePersistence();
+
   List<String> genres = [
     'All genres',
     'Fantasy',
@@ -54,6 +57,8 @@ class _BooksallState extends State<Booksall> {
 
   @override
   Widget build(BuildContext context) {
+    routePersistence.saveLastRoute('/books_all');
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 219, 254, 250),
@@ -249,6 +254,8 @@ class _BooksallState extends State<Booksall> {
                               MaterialPageRoute(
                                 builder: (context) => BookDetailScreen(
                                   bookId: '', // Pass the actual book ID here
+                                  isLoggedIn: widget.isLoggedIn,
+                                  logout: widget.logout,
                                 ),
                               ),
                             );

@@ -1,4 +1,5 @@
 // lib/main.dart
+import 'package:e_lib/books_all_screen.dart';
 import 'package:e_lib/profile.dart';
 import 'package:e_lib/signup.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,8 @@ import 'package:logger/logger.dart';
 import 'elib_home.dart';
 import 'login.dart';
 import 'route_persistence.dart';
+import 'package:e_lib/book_detail_screen.dart';
+import 'package:e_lib/book_read_screen.dart';
 
 void main() {
   runApp(MyApp());
@@ -64,10 +67,13 @@ class _MyAppState extends State<MyApp> {
       initialLocation: initialRoute,
       routes: [
         GoRoute(
+          path: '/',
+          redirect: (_, __) => '/home',
+        ),
+        GoRoute(
           path: '/login',
           builder: (context, state) => Login(),
         ),
-
         GoRoute(
           path: '/home',
           builder: (context, state) =>
@@ -78,8 +84,32 @@ class _MyAppState extends State<MyApp> {
           builder: (context, state) =>
               Profile(isLoggedIn: isLoggedIn, logout: logout),
         ),
-        // Add other routes here
-        GoRoute(path: '/signup', builder: (context, state) => Signup()),
+        GoRoute(
+          path: '/signup',
+          builder: (context, state) => Signup(),
+        ),
+        GoRoute(
+          path: '/books_all',
+          builder: (context, state) =>
+              Booksall(isLoggedIn: isLoggedIn, logout: logout),
+        ),
+        GoRoute(
+          path: '/book_details/:id',
+          builder: (context, state) => BookDetailScreen(
+            bookId: state.params['id']!,
+            isLoggedIn: isLoggedIn,
+            logout: logout,
+          ),
+        ),
+        GoRoute(
+          path: '/book_read/:id',
+          builder: (context, state) => BookRead(
+            bookUrl:
+                'https://your-api-url.com/books/${state.params['id']}/content',
+            isLoggedIn: isLoggedIn,
+            logout: logout,
+          ),
+        ),
       ],
       redirect: (context, state) {
         final isLoggingIn = state.location == '/login';

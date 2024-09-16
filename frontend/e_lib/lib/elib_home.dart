@@ -68,6 +68,12 @@ class _ELibState extends State<ELib> {
     Booksall(isLoggedIn: true, logout: () async {}),
     Profile(isLoggedIn: true, logout: () async {})
   ];
+  List routes = [
+    '/home',
+    '/search',
+    '/books_all',
+    '/account',
+  ];
   final ApiService apiService = ApiService();
   final BookService bookService = BookService();
   Map<String, dynamic>? userData;
@@ -416,10 +422,10 @@ class _ELibState extends State<ELib> {
                         shrinkWrap: true,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
+                                crossAxisCount: 3,
                                 crossAxisSpacing: 0,
                                 mainAxisSpacing: 4,
-                                mainAxisExtent: 400),
+                                mainAxisExtent: 250),
                         itemBuilder: (context, index) {
                           final book = books[index];
                           final bookCoverUrl = baseUrl + book['bookCover'];
@@ -430,8 +436,11 @@ class _ELibState extends State<ELib> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        BookDetailScreen(bookId: book['_id']),
+                                    builder: (context) => BookDetailScreen(
+                                      bookId: book['_id'],
+                                      isLoggedIn: widget.isLoggedIn,
+                                      logout: widget.logout,
+                                    ),
                                   ),
                                 );
                               },
@@ -453,7 +462,7 @@ class _ELibState extends State<ELib> {
                                                 BorderRadius.circular(20),
                                             image: DecorationImage(
                                               image: NetworkImage(bookCoverUrl),
-                                              fit: BoxFit.fill,
+                                              fit: BoxFit.contain,
                                             ),
                                           ),
                                         ),
@@ -505,6 +514,7 @@ class _ELibState extends State<ELib> {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => screens[index]));
               setState(() => selectedIndex = index);
+              context.go(routes[index]);
             },
             child: Icon(
               icons[index],
