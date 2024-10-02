@@ -82,7 +82,7 @@ const getAllBooks = asyncHandler(async (req, res) => {
       });
       
 
-    const deleteBook = asyncHandler(async (req, res) => {
+      const deleteBook = asyncHandler(async (req, res) => {
         const bookId = req.params.bookId;
         try {
 
@@ -110,6 +110,7 @@ const getAllBooks = asyncHandler(async (req, res) => {
           return res.status(500).json(new ApiResponse(500, {}, error.message || "Something went wrong"));
         }
       });
+    
     
 
       const publishedBooks = asyncHandler( async (req, res) => {
