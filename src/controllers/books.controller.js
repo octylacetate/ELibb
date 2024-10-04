@@ -94,10 +94,10 @@ const getAllBooks = asyncHandler(async (req, res) => {
                 throw new ApiError(400, "Book not available");              }
           
               // Remove the department from the database
-              await Department.findOneAndDelete({ _id: bookId });
+              await Books.findOneAndDelete({ _id: bookId });
           
               // Delete the thumbnail image from the public folder
-              const thumbnailPath = path.join('public', departmentToDelete.bookPath.replace('/public/', ''));
+              const bookPath = path.join('public', bookToDelete.bookPath.replace('/public/', ''));
               
               if (fs.existsSync(bookPath)) {
                 fs.unlinkSync(bookPath);
