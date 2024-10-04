@@ -83,27 +83,26 @@ const getAllBooks = asyncHandler(async (req, res) => {
       
 
       const deleteBook = asyncHandler(async (req, res) => {
-        const bookId = req.params.bookId;
-        try {
-
-          const bookToDelete = await Books.findOne({ _id: bookId })
-          const bookDeleted = await Books.findOneAndDelete({ _id: bookId });
-          if (!bookDeleted) {
-            throw new ApiError(400, "Book not deleted");
-          }
-      
-          const filePath = path.join(__dirname, '../../public', bookToDelete.bookPath);
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-          } else {
-            console.log(`File not found: ${filePath}`);
-          }
-
-          const removedBook = fs.unlinkSync(bookToDelete.bookPath);
-
-          if(!removedBook){
-            throw new ApiError(402, "Book is not removed from temp")
-          }
+        
+            const bookId = req.params.bookId;
+          
+            try {
+              // Find the department to get the thumbnail path
+              const bookToDelete = await Books.findOne({ _id: bookId });
+          
+              if (!bookToDelete) {
+                throw new ApiError(400, "Book not available");              }
+          
+              // Remove the department from the database
+              await Department.findOneAndDelete({ _id: bookId });
+          
+              // Delete the thumbnail image from the public folder
+              const thumbnailPath = path.join('public', departmentToDelete.bookPath.replace('/public/', ''));
+              
+              if (fs.existsSync(bookPath)) {
+                fs.unlinkSync(bookPath);
+              }
+          
       
           return res.status(200).json(new ApiResponse(200, {}, "Book deleted successfully"));
         } catch (error) {
