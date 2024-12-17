@@ -5,7 +5,9 @@ import {
     deleteBook,
     getAllBooks,
     getOneBook,
-    publishedBooks
+    publishedBooks,
+    getBooksByCategory,
+    searchBooks
 } from "../controllers/books.controller.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 import { isPublisher } from "../middlewares/publisher.middleware.js";
@@ -21,5 +23,7 @@ router.route("/get-books").get(verifyJWT, getAllBooks);
 router.route("/get-book/:bookId").get(verifyJWT, getOneBook);
 router.route("/delete-book/:bookId").delete(verifyJWT, isPublisher, deleteBook)
 router.route("/published-books").get(verifyJWT, publishedBooks);
+router.route("/get-books-by-category").get(verifyJWT, getBooksByCategory);
+router.route("/search-books").get(verifyJWT, searchBooks);
 
 export default router;

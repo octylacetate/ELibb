@@ -136,10 +136,69 @@ const getAllBooks = asyncHandler(async (req, res) => {
         }
       });
 
+
+
+      const getBooksByCategory = asyncHandler(async (req, res) => {
+        const { category } = req.query;
+    
+        if (!category) {
+            throw new ApiError(400, "Category is required");
+        }
+    
+        try {
+            const books = await Books.find({ category });
+    
+            if (!books || books.length === 0) {
+                throw new ApiError(404, "No books found in this category");
+            }
+    
+            return res.status(200).json(new ApiResponse(
+                200,
+                { books },
+                "Books filtered by category fetched successfully"
+            ));
+        } catch (error) {
+            throw new ApiError(500, "Something went wrong, couldn't fetch books by category");
+        }
+    });
+
+
+
+    const searchBooks = asyncHandler(async (req, res) => {
+      const { category, bookTitle, author } = req.query;
+  
+      const searchCriteria = {};
+  
+      // Add search filters dynamically
+      if (category) searchCriteria.category = category;
+      if (bookTitle) searchCriteria.bookTitle = { $regex: bookTitle, $options: "i" }; // Case-insensitive search
+      if (author) searchCriteria.author = { $regex: author, $options: "i" }; // Case-insensitive search
+  
+      try {
+          const books = await Books.find(searchCriteria);
+  
+          if (!books || books.length === 0) {
+              throw new ApiError(404, "No books match the search criteria");
+          }
+  
+          return res.status(200).json(new ApiResponse(
+              200,
+              { books },
+              "Books fetched successfully based on search criteria"
+          ));
+      } catch (error) {
+          throw new ApiError(500, "Something went wrong, couldn't fetch books");
+      }
+  });
+  
+    
+
 export {
     uploadBooks,
     getAllBooks,
     getOneBook,
     deleteBook,
-    publishedBooks
+    publishedBooks,
+    getBooksByCategory,
+    searchBooks
 }
