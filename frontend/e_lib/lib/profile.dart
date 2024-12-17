@@ -6,9 +6,11 @@ import 'package:e_lib/help_icons.dart';
 import 'package:e_lib/login.dart';
 import 'package:e_lib/my_book.dart';
 import 'package:e_lib/my_flutter_app_icons.dart';
+import 'package:e_lib/route_persistence.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:e_lib/widgets/myBooksLib.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:logger/logger.dart';
 import 'package:lottie/lottie.dart';
 
@@ -24,6 +26,8 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileState extends State<Profile> {
+  final RoutePersistence routePersistence = RoutePersistence();
+
   final ApiService apiService = ApiService();
   Map<String, dynamic>? userData;
   List screens = [
@@ -66,6 +70,7 @@ class _ProfileState extends State<Profile> {
 
   @override
   Widget build(BuildContext context) {
+    routePersistence.saveLastRoute('/profile');
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
     const String baseUrl =
@@ -191,6 +196,7 @@ class _ProfileState extends State<Profile> {
                       builder: (context) => ELib(
                           isLoggedIn: widget.isLoggedIn, logout: widget.logout),
                     ));
+                context.go('/home');
               },
               child: ListTile(
                 leading: Icon(MyFlutterApp.home),

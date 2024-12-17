@@ -1,3 +1,4 @@
+import 'package:e_lib/route_persistence.dart';
 import 'package:e_lib/service/apiservicefavorites.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
@@ -8,14 +9,23 @@ import 'package:e_lib/service/apiservicebooks.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final String bookId;
+  final bool isLoggedIn;
+  final Function logout;
 
-  const BookDetailScreen({required this.bookId, Key? key}) : super(key: key);
+  const BookDetailScreen({
+    Key? key,
+    required this.bookId,
+    required this.isLoggedIn,
+    required this.logout,
+  }) : super(key: key);
 
   @override
   _BookDetailScreenState createState() => _BookDetailScreenState();
 }
 
 class _BookDetailScreenState extends State<BookDetailScreen> {
+  final RoutePersistence routePersistence = RoutePersistence();
+
   final BookService bookService = BookService();
   final FavouriteService favouriteService = FavouriteService();
   final Logger _logger = Logger();
@@ -76,6 +86,8 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    routePersistence.saveLastRoute('/book-detail/${widget.bookId}');
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 219, 254, 250),
@@ -189,7 +201,10 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) => BookRead(
-                                        bookUrl: baseUrl + book!['bookPath']),
+                                      bookUrl: baseUrl + book!['bookPath'],
+                                      isLoggedIn: widget.isLoggedIn,
+                                      logout: widget.logout,
+                                    ),
                                   ),
                                 );
                               },

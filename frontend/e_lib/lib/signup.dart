@@ -1,9 +1,11 @@
 import 'dart:typed_data';
+import 'package:e_lib/route_persistence.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:e_lib/elib_home.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
 
 class Signup extends StatefulWidget {
   @override
@@ -11,6 +13,7 @@ class Signup extends StatefulWidget {
 }
 
 class _SignupState extends State<Signup> {
+  final RoutePersistence routePersistence = RoutePersistence();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
@@ -86,6 +89,8 @@ class _SignupState extends State<Signup> {
 
   @override
   Widget build(BuildContext context) {
+    routePersistence.saveLastRoute('/signup');
+
     return MaterialApp(
       home: Scaffold(
         backgroundColor: Colors.white,
@@ -152,7 +157,7 @@ class _SignupState extends State<Signup> {
                   _buildTextField(_bioController, 'Bio', maxLines: 3),
                   SizedBox(height: 25),
                   ElevatedButton(
-                    onPressed: () => _register(context),
+                    onPressed: () => {_register(context), context.go('/home')},
                     style: ElevatedButton.styleFrom(
                       foregroundColor: Colors.white,
                       backgroundColor: Color.fromARGB(255, 0, 21, 44),

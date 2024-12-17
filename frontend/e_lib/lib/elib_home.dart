@@ -1,3 +1,4 @@
+import 'package:e_lib/route_persistence.dart';
 import 'package:e_lib/screens/book_list_screen.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:e_lib/service/apiservicebooks.dart';
@@ -15,6 +16,7 @@ import 'help_icons.dart';
 import 'my_book.dart';
 import 'my_flutter_app_icons.dart';
 import 'profile.dart';
+import 'package:go_router/go_router.dart';
 
 class ELib extends StatefulWidget {
   final bool isLoggedIn;
@@ -28,6 +30,7 @@ class ELib extends StatefulWidget {
 }
 
 class _ELibState extends State<ELib> {
+  final RoutePersistence routePersistence = RoutePersistence();
   static final Logger _logger = Logger();
   CarouselController controller = CarouselController();
   bool isPressed = false;
@@ -64,6 +67,12 @@ class _ELibState extends State<ELib> {
     ELib(isLoggedIn: true, logout: () async {}),
     Booksall(isLoggedIn: true, logout: () async {}),
     Profile(isLoggedIn: true, logout: () async {})
+  ];
+  List routes = [
+    '/home',
+    '/search',
+    '/books_all',
+    '/account',
   ];
   final ApiService apiService = ApiService();
   final BookService bookService = BookService();
@@ -114,6 +123,7 @@ class _ELibState extends State<ELib> {
 
   @override
   Widget build(BuildContext context) {
+    routePersistence.saveLastRoute('/home');
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       appBar: AppBar(
@@ -412,10 +422,10 @@ class _ELibState extends State<ELib> {
                         shrinkWrap: true,
                         gridDelegate:
                             const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
+                                crossAxisCount: 3,
                                 crossAxisSpacing: 0,
                                 mainAxisSpacing: 4,
-                                mainAxisExtent: 400),
+                                mainAxisExtent: 250),
                         itemBuilder: (context, index) {
                           final book = books[index];
                           final bookCoverUrl = baseUrl + book['bookCover'];
@@ -426,8 +436,11 @@ class _ELibState extends State<ELib> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) =>
-                                        BookDetailScreen(bookId: book['_id']),
+                                    builder: (context) => BookDetailScreen(
+                                      bookId: book['_id'],
+                                      isLoggedIn: widget.isLoggedIn,
+                                      logout: widget.logout,
+                                    ),
                                   ),
                                 );
                               },
@@ -449,7 +462,7 @@ class _ELibState extends State<ELib> {
                                                 BorderRadius.circular(20),
                                             image: DecorationImage(
                                               image: NetworkImage(bookCoverUrl),
-                                              fit: BoxFit.fill,
+                                              fit: BoxFit.contain,
                                             ),
                                           ),
                                         ),
@@ -501,6 +514,7 @@ class _ELibState extends State<ELib> {
               Navigator.push(context,
                   MaterialPageRoute(builder: (context) => screens[index]));
               setState(() => selectedIndex = index);
+              context.go(routes[index]);
             },
             child: Icon(
               icons[index],

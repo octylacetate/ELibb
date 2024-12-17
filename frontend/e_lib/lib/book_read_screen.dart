@@ -1,18 +1,28 @@
 import 'dart:typed_data';
+import 'package:e_lib/route_persistence.dart';
 import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:http/http.dart' as http;
 
 class BookRead extends StatefulWidget {
-  final String bookUrl; // Network URL for the PDF
+  final String bookUrl;
+  final bool isLoggedIn;
+  final Function logout;
 
-  const BookRead({required this.bookUrl, Key? key}) : super(key: key);
+  const BookRead({
+    required this.bookUrl,
+    required this.isLoggedIn,
+    required this.logout,
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<BookRead> createState() => _BookReadState();
 }
 
 class _BookReadState extends State<BookRead> {
+  final RoutePersistence routePersistence = RoutePersistence();
+
   PdfController? _pdfController;
   bool _isLoading = true;
 
@@ -56,6 +66,8 @@ class _BookReadState extends State<BookRead> {
 
   @override
   Widget build(BuildContext context) {
+    routePersistence.saveLastRoute('/book-read/${widget.bookUrl}');
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 219, 254, 250),
