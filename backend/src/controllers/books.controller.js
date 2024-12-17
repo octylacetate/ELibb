@@ -82,32 +82,34 @@ const getAllBooks = asyncHandler(async (req, res) => {
       });
       
 
-    const deleteBook = asyncHandler(async (req, res) => {
-        const bookId = req.params.bookId;
-        try {
-          const bookDeleted = await Books.findOneAndDelete({ _id: bookId });
-          if (!bookDeleted) {
-            throw new ApiError(400, "Book not deleted");
-          }
-      
-        //   const filePath = path.join(__dirname, '../../public', bookDeleted.bookPath);
-        //   if (fs.existsSync(filePath)) {
-        //     fs.unlinkSync(filePath);
-        //   } else {
-        //     console.log(`File not found: ${filePath}`);
-        //   }
-
-          const removedBook = fs.unlinkSync(bookDeleted.bookPath)
-
-          if(!removedBook){
-            throw new ApiError(402, "Book is not removed from temp")
-          }
+      const deleteBook = asyncHandler(async (req, res) => {
+        
+            const bookId = req.params.bookId;
+          
+            try {
+              // Find the department to get the thumbnail path
+              const bookToDelete = await Books.findOne({ _id: bookId });
+          
+              if (!bookToDelete) {
+                throw new ApiError(400, "Book not available");              }
+          
+              // Remove the department from the database
+              await Books.findOneAndDelete({ _id: bookId });
+          
+              // Delete the thumbnail image from the public folder
+              const bookPath = path.join('public', bookToDelete.bookPath.replace('/public/', ''));
+              
+              if (fs.existsSync(bookPath)) {
+                fs.unlinkSync(bookPath);
+              }
+          
       
           return res.status(200).json(new ApiResponse(200, {}, "Book deleted successfully"));
         } catch (error) {
           return res.status(500).json(new ApiResponse(500, {}, error.message || "Something went wrong"));
         }
       });
+    
     
 
       const publishedBooks = asyncHandler( async (req, res) => {
@@ -134,10 +136,69 @@ const getAllBooks = asyncHandler(async (req, res) => {
         }
       });
 
+
+
+      const getBooksByCategory = asyncHandler(async (req, res) => {
+        const { category } = req.query;
+    
+        if (!category) {
+            throw new ApiError(400, "Category is required");
+        }
+    
+        try {
+            const books = await Books.find({ category });
+    
+            if (!books || books.length === 0) {
+                throw new ApiError(404, "No books found in this category");
+            }
+    
+            return res.status(200).json(new ApiResponse(
+                200,
+                { books },
+                "Books filtered by category fetched successfully"
+            ));
+        } catch (error) {
+            throw new ApiError(500, "Something went wrong, couldn't fetch books by category");
+        }
+    });
+
+
+
+    const searchBooks = asyncHandler(async (req, res) => {
+      const { category, bookTitle, author } = req.query;
+  
+      const searchCriteria = {};
+  
+      // Add search filters dynamically
+      if (category) searchCriteria.category = category;
+      if (bookTitle) searchCriteria.bookTitle = { $regex: bookTitle, $options: "i" }; // Case-insensitive search
+      if (author) searchCriteria.author = { $regex: author, $options: "i" }; // Case-insensitive search
+  
+      try {
+          const books = await Books.find(searchCriteria);
+  
+          if (!books || books.length === 0) {
+              throw new ApiError(404, "No books match the search criteria");
+          }
+  
+          return res.status(200).json(new ApiResponse(
+              200,
+              { books },
+              "Books fetched successfully based on search criteria"
+          ));
+      } catch (error) {
+          throw new ApiError(500, "Something went wrong, couldn't fetch books");
+      }
+  });
+  
+    
+
 export {
     uploadBooks,
     getAllBooks,
     getOneBook,
     deleteBook,
-    publishedBooks
+    publishedBooks,
+    getBooksByCategory,
+    searchBooks
 }
