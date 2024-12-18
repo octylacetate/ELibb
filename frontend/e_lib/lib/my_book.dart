@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
+import 'package:e_lib/my_flutter_app_icons.dart';
 
 class MyBook extends StatefulWidget {
   const MyBook({super.key});
@@ -15,6 +18,16 @@ class _MyBookState extends State<MyBook> {
     'cover_imgs/the-mistborn-bookimg.jpeg',
     'cover_imgs/the-nature-of-wind-bookimg.jpg'
   ];
+  
+  List<IconData> icons = [
+    MyFlutterApp.home,
+    MyFlutterApp.search,
+    MyFlutterApp.library_icon,
+    MyFlutterApp.supervisor_account,
+  ];
+
+  int selectedIndex = 1;
+
   @override
   Widget build(BuildContext context) {
     var screenWidth = MediaQuery.of(context).size.width;
@@ -132,6 +145,53 @@ class _MyBookState extends State<MyBook> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          context.go('/');
+        },
+        child: const Icon(Icons.home, color: Color.fromARGB(255, 17, 106, 136)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
+        backgroundColor: const Color.fromARGB(255, 100, 204, 199),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: AnimatedBottomNavigationBar.builder(
+        activeIndex: _calculateSelectedIndex(context),
+        itemCount: icons.length,
+        tabBuilder: (int index, bool isActive) {
+          return GestureDetector(
+            onTap: () {
+              _onItemTapped(index, context);
+            },
+            child: Icon(
+              icons[index],
+              size: 24,
+              color: isActive
+                  ? Colors.amberAccent
+                  : const Color.fromARGB(255, 100, 204, 199),
+            ),
+          );
+        },
+        gapLocation: GapLocation.center,
+        notchSmoothness: NotchSmoothness.verySmoothEdge,
+        leftCornerRadius: 8,
+        rightCornerRadius: 8,
+        backgroundColor: const Color.fromARGB(255, 17, 106, 136),
+        onTap: (index) => _onItemTapped(index, context),
+      ),
     );
+  }
+
+  static int _calculateSelectedIndex(BuildContext context) {
+    final String path = GoRouterState.of(context).uri.path;
+    if (path.startsWith('/profile')) return 3;
+    if (path.startsWith('/my-books')) return 1;
+    if (path.startsWith('/all-books')) return 2;
+    return 0;
+  }
+
+  void _onItemTapped(int index, BuildContext context) {
+    final routes = ['/', '/my-books', '/all-books', '/profile'];
+    context.go(routes[index]);
+    setState(() => selectedIndex = index);
   }
 }

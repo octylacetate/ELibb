@@ -3,6 +3,9 @@ import 'package:e_lib/signup.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
+import 'package:e_lib/providers/auth_provider.dart';
 
 class Login extends StatefulWidget {
   const Login({Key? key}) : super(key: key);
@@ -23,21 +26,19 @@ class _LoginState extends State<Login> {
 
     try {
       final response = await apiService.loginUser(email, password);
+      if (!context.mounted) return;
+      
       if (response['statusCode'] == 200) {
-        // Login successful
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ELib(isLoggedIn: true, logout: () async {}),
-          ),
-        );
+        await Provider.of<AuthProvider>(context, listen: false).setLoggedIn();
+        if (!context.mounted) return;
+        context.go('/');
       } else {
-        // Handle errors here
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Login failed: ${response['message']}')),
         );
       }
     } catch (error) {
-      // Handle exceptions here
+      if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('An error occurred: $error')),
       );
@@ -145,10 +146,7 @@ class _LoginState extends State<Login> {
                         Container(
                           child: TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (context) => Signup()),
-                              );
+                              context.push('/signup');
                             },
                             child: Text(
                               'Forgot Password?',
@@ -184,9 +182,7 @@ class _LoginState extends State<Login> {
                     Center(
                       child: ElevatedButton(
                         onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(builder: (context) => Signup()),
-                          );
+                          context.push('/signup');
                         },
                         style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
@@ -214,10 +210,7 @@ class _LoginState extends State<Login> {
                         Text("Don't have an account? "),
                         TextButton(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (context) => Signup()),
-                              );
+                              context.push('/signup');
                             },
                             style: TextButton.styleFrom(
                               foregroundColor:

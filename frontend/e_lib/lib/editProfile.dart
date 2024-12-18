@@ -8,6 +8,7 @@ import 'package:e_lib/profile.dart';
 import 'package:e_lib/service/apiclassusers.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 
@@ -275,10 +276,8 @@ class _EditProfileState extends State<EditProfile> {
           tabBuilder: (int index, bool isActive) {
             return GestureDetector(
               onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => screens[selectedIndex]));
+                final routes = ['/', '/my-books', '/all-books', '/profile'];
+                context.go(routes[index]);
                 setState(() => selectedIndex = index);
               },
               child: Icon(

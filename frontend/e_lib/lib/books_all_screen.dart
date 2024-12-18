@@ -6,6 +6,7 @@ import 'package:e_lib/my_flutter_app_icons.dart';
 import 'package:e_lib/profile.dart';
 import 'package:e_lib/widgets/fav_books.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class Booksall extends StatefulWidget {
   final bool isLoggedIn;
@@ -244,14 +245,7 @@ class _BooksallState extends State<Booksall> {
                         padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
                         child: InkWell(
                           onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BookDetailScreen(
-                                  bookId: '', // Pass the actual book ID here
-                                ),
-                              ),
-                            );
+                            context.go('/book/${index}');
                           },
                           child: Card(
                             shadowColor: Color.fromARGB(255, 17, 106, 136),
@@ -304,22 +298,20 @@ class _BooksallState extends State<Booksall> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          setState(() => selectedIndex = 0);
+          context.go('/');
         },
         child: const Icon(Icons.home, color: Color.fromARGB(255, 17, 106, 136)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
-        backgroundColor: Color.fromARGB(255, 100, 204, 199),
+        backgroundColor: const Color.fromARGB(255, 100, 204, 199),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar.builder(
-        activeIndex: selectedIndex,
+        activeIndex: _calculateSelectedIndex(context),
         itemCount: icons.length,
         tabBuilder: (int index, bool isActive) {
           return GestureDetector(
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => screens[index]));
-              setState(() => selectedIndex = index);
+              _onItemTapped(index, context);
             },
             child: Icon(
               icons[index],
@@ -335,8 +327,22 @@ class _BooksallState extends State<Booksall> {
         leftCornerRadius: 8,
         rightCornerRadius: 8,
         backgroundColor: const Color.fromARGB(255, 17, 106, 136),
-        onTap: (index) => setState(() => selectedIndex = index),
+        onTap: (index) => _onItemTapped(index, context),
       ),
     );
+  }
+
+  static int _calculateSelectedIndex(BuildContext context) {
+    final String path = GoRouterState.of(context).uri.path;
+    if (path.startsWith('/profile')) return 3;
+    if (path.startsWith('/my-books')) return 1;
+    if (path.startsWith('/all-books')) return 2;
+    return 0;
+  }
+
+  void _onItemTapped(int index, BuildContext context) {
+    final routes = ['/', '/my-books', '/all-books', '/profile'];
+    context.go(routes[index]);
+    setState(() => selectedIndex = index);
   }
 }

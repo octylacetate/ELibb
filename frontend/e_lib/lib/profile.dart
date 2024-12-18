@@ -11,6 +11,7 @@ import 'package:e_lib/widgets/myBooksLib.dart';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:lottie/lottie.dart';
+import 'package:go_router/go_router.dart';
 
 class Profile extends StatefulWidget {
   final bool isLoggedIn;
@@ -26,21 +27,15 @@ class Profile extends StatefulWidget {
 class _ProfileState extends State<Profile> {
   final ApiService apiService = ApiService();
   Map<String, dynamic>? userData;
-  List screens = [
-    ELib(isLoggedIn: true, logout: () async {}),
-    ELib(isLoggedIn: true, logout: () async {}),
-    Booksall(isLoggedIn: true, logout: () async {}),
-    Profile(isLoggedIn: true, logout: () async {})
-  ];
-  int selectedIndex = 3;
   bool showMyBooks = true;
+  static final Logger _logger = Logger();
+  int selectedIndex = 3;
   List<IconData> icons = [
     MyFlutterApp.home,
     MyFlutterApp.search,
     MyFlutterApp.library_icon,
     MyFlutterApp.supervisor_account,
   ];
-  static final Logger _logger = Logger();
 
   @override
   void initState() {
@@ -92,18 +87,15 @@ class _ProfileState extends State<Profile> {
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (widget.isLoggedIn) {
-                  widget.logout();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => Login()),
-                  );
+                  final currentLocation = GoRouterState.of(context).uri.path;
+                  await widget.logout();
+                  if (context.mounted) {
+                    context.go('/login?from=$currentLocation');
+                  }
                 } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Login()),
-                  );
+                  context.go('/login?from=/profile');
                 }
               },
               style: ButtonStyle(
@@ -185,12 +177,7 @@ class _ProfileState extends State<Profile> {
             ),
             InkWell(
               onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ELib(
-                          isLoggedIn: widget.isLoggedIn, logout: widget.logout),
-                    ));
+                context.go('/');
               },
               child: ListTile(
                 leading: Icon(MyFlutterApp.home),
@@ -199,8 +186,7 @@ class _ProfileState extends State<Profile> {
             ),
             InkWell(
               onTap: () {
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => MyBook()));
+                context.go('/my-books');
               },
               child: ListTile(
                 leading: Icon(MyFlutterApp.search),
@@ -376,7 +362,7 @@ class _ProfileState extends State<Profile> {
                   ),
                 )),
             Positioned(
-              top: 30,
+              top: 20,
               left: MediaQuery.of(context).size.width / 2 - 40,
               child: CircleAvatar(
                 backgroundImage: userData != null &&
@@ -403,10 +389,7 @@ class _ProfileState extends State<Profile> {
                 alignment: const Alignment(0, -0.40),
                 child: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => EditProfile()));
+                      context.push('/edit-profile');
                     },
                     style: ButtonStyle(
                       backgroundColor: MaterialStateProperty.resolveWith(
@@ -479,7 +462,7 @@ class _ProfileState extends State<Profile> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          setState(() => selectedIndex = 0);
+          context.go('/');
         },
         child: const Icon(Icons.home, color: Color.fromARGB(255, 17, 106, 136)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
@@ -487,14 +470,12 @@ class _ProfileState extends State<Profile> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar.builder(
-        activeIndex: selectedIndex,
+        activeIndex: _calculateSelectedIndex(context),
         itemCount: icons.length,
         tabBuilder: (int index, bool isActive) {
           return GestureDetector(
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => screens[index]));
-              setState(() => selectedIndex = index);
+              _onItemTapped(index, context);
             },
             child: Icon(
               icons[index],
@@ -510,8 +491,30 @@ class _ProfileState extends State<Profile> {
         leftCornerRadius: 8,
         rightCornerRadius: 8,
         backgroundColor: const Color.fromARGB(255, 17, 106, 136),
-        onTap: (index) => setState(() => selectedIndex = index),
+        onTap: (index) => _onItemTapped(index, context),
       ),
     );
+  }
+
+  static int _calculateSelectedIndex(BuildContext context) {
+    final String path = GoRouterState.of(context).uri.path;
+    if (path.startsWith('/profile')) return 3;
+    if (path.startsWith('/my-books')) return 1;
+    if (path.startsWith('/all-books')) return 2;
+    return 0;
+  }
+
+  void _onItemTapped(int index, BuildContext context) {
+    final routes = ['/', '/my-books', '/all-books', '/profile'];
+    context.go(routes[index]);
+    setState(() => selectedIndex = index);
+  }
+
+  void _handleLogout(BuildContext context) async {
+    final currentLocation = GoRouterState.of(context).uri.path;
+    await widget.logout();
+    if (context.mounted) {
+      context.go('/login?from=$currentLocation');
+    }
   }
 }

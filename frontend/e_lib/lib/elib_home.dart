@@ -15,13 +15,19 @@ import 'help_icons.dart';
 import 'my_book.dart';
 import 'my_flutter_app_icons.dart';
 import 'profile.dart';
+import 'package:go_router/go_router.dart';
 
 class ELib extends StatefulWidget {
   final bool isLoggedIn;
   final Future<void> Function() logout;
+  final Widget? child;
 
-  const ELib({required this.isLoggedIn, required this.logout, Key? key})
-      : super(key: key);
+  const ELib({
+    required this.isLoggedIn,
+    required this.logout,
+    this.child,
+    Key? key
+  }) : super(key: key);
 
   @override
   State<ELib> createState() => _ELibState();
@@ -282,7 +288,8 @@ class _ELibState extends State<ELib> {
           ],
         ),
       ),
-      body: isLoading
+      body: widget.child ?? Container(
+        child: isLoading
           ? Center(child: CircularProgressIndicator())
           : isError
               ? Center(child: Text('Failed to load books'))
@@ -483,9 +490,10 @@ class _ELibState extends State<ELib> {
                     ),
                   ],
                 ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          setState(() => selectedIndex = 0);
+          context.go('/');
         },
         child: const Icon(Icons.home, color: Color.fromARGB(255, 17, 106, 136)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(40)),
@@ -493,14 +501,12 @@ class _ELibState extends State<ELib> {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: AnimatedBottomNavigationBar.builder(
-        activeIndex: selectedIndex,
+        activeIndex: _calculateSelectedIndex(context),
         itemCount: icons.length,
         tabBuilder: (int index, bool isActive) {
           return GestureDetector(
             onTap: () {
-              Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => screens[index]));
-              setState(() => selectedIndex = index);
+              _onItemTapped(index, context);
             },
             child: Icon(
               icons[index],
@@ -516,9 +522,23 @@ class _ELibState extends State<ELib> {
         leftCornerRadius: 8,
         rightCornerRadius: 8,
         backgroundColor: const Color.fromARGB(255, 17, 106, 136),
-        onTap: (index) => setState(() => selectedIndex = index),
+        onTap: (index) => _onItemTapped(index, context),
       ),
     );
+  }
+
+  static int _calculateSelectedIndex(BuildContext context) {
+    final String path = GoRouterState.of(context).uri.path;
+    if (path.startsWith('/profile')) return 3;
+    if (path.startsWith('/my-books')) return 1;
+    if (path.startsWith('/all-books')) return 2;
+    return 0;
+  }
+
+  void _onItemTapped(int index, BuildContext context) {
+    final routes = ['/', '/my-books', '/all-books', '/profile'];
+    context.go(routes[index]);
+    setState(() => selectedIndex = index);
   }
 
   Widget buildCarouselItem(String imagePath, String title, String author) {
