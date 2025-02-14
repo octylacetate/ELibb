@@ -1,4 +1,4 @@
-import express from "express";
+import express from "express"
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from 'path';
@@ -8,7 +8,7 @@ const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 app.use(cors({
-    origin: 'http://localhost:58996' ,   //frontend ki port dlni
+    origin: 'http://localhost:60969' ,   //frontend ki port dlni
     credentials: true 
 }));
 
@@ -25,12 +25,14 @@ import userRouter from './routes/user.routes.js';
 import booksRouter from './routes/books.routes.js';
 import favouriteRouter from './routes/favourite.routes.js';
 import reviewRouter from './routes/reviews.routes.js';
+import recentlyViewedRouter from './routes/recentlyViewed.routes.js';
 
 //routes declaration
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/books", booksRouter)
 app.use("/api/v1/favourite", favouriteRouter)
 app.use("/api/v1/reviews", reviewRouter)
+app.use("/api/v1/recently-viewed", recentlyViewedRouter)
 
 
 

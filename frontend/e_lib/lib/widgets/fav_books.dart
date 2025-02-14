@@ -68,7 +68,7 @@ class _FavoriteBooksState extends State<FavoriteBooks> {
                               borderRadius: BorderRadius.circular(50),
                               image: DecorationImage(
                                 image: NetworkImage(
-                                    'http://localhost:3000/' + book['bookCover']),
+                                    'http://localhost:8000/' + book['bookCover']),
                                 fit: BoxFit.cover,
                               ),
                             ),

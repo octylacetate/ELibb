@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 
 class BookService {
   static final Logger _logger = Logger();
-  static const baseUrl = 'http://localhost:3000/api/v1/books/';
+  static const baseUrl = 'http://localhost:8000/api/v1/books/';
   static const FlutterSecureStorage storage = FlutterSecureStorage();
 
   Future<Map<String, String>> _getHeaders() async {
@@ -30,6 +30,7 @@ class BookService {
     String bookCoverFileName,
     String author,
     String description,
+    String genre,
   ) async {
     final url = Uri.parse('${baseUrl}upload-book');
     var request = http.MultipartRequest('POST', url);
@@ -38,6 +39,7 @@ class BookService {
       request.fields['bookTitle'] = bookTitle;
       request.fields['author'] = author;
       request.fields['description'] = description;
+      request.fields['genre'] = genre;
       request.files.add(http.MultipartFile.fromBytes('bookPath', bookBytes,
           filename: bookFileName));
       request.files.add(http.MultipartFile.fromBytes(
@@ -64,8 +66,13 @@ class BookService {
     }
   }
 
-  Future<Map<String, dynamic>> getAllBooks(int page) async {
-    final url = Uri.parse('${baseUrl}get-books?page=$page');
+  Future<Map<String, dynamic>> getAllBooks(int page, [String? genre]) async {
+    final queryParams = {
+      'page': page.toString(),
+      if (genre != null && genre != 'All genres') 'genre': genre,
+    };
+    
+    final url = Uri.parse('${baseUrl}get-books').replace(queryParameters: queryParams);
     final headers = await _getHeaders();
 
     try {
@@ -131,6 +138,82 @@ class BookService {
           _logger.e('Failed to delete book: ${response.body}');
           throw Exception('Failed to delete book: ${response.body}');
         }
+      }
+    } catch (e) {
+      _logger.e('An error occurred: $e');
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> updateReadingProgress(String bookId, double progress) async {
+    final url = Uri.parse('http://localhost:8000/api/v1/recently-viewed/update-progress/$bookId');
+    final headers = await _getHeaders();
+
+    try {
+      _logger.d('Updating reading progress at: $url');
+      final response = await http.patch(
+        url,
+        headers: headers,
+        body: jsonEncode({'progress': progress}),
+      );
+      _logger.d('Received response with status code: ${response.statusCode}');
+      _logger.d('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(response.body);
+        _logger.d('Successfully updated reading progress: $decodedResponse');
+        return decodedResponse;
+      } else {
+        final errorData = jsonDecode(response.body);
+        _logger.e('Failed to update reading progress: ${errorData['message']}');
+        throw Exception('Failed to update reading progress: ${errorData['message']}');
+      }
+    } catch (e) {
+      _logger.e('An error occurred: $e');
+      throw Exception('An error occurred: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getRecentlyViewedBooks() async {
+    final url = Uri.parse('http://localhost:8000/api/v1/recently-viewed/get-recently-viewed');
+    final headers = await _getHeaders();
+
+    try {
+      _logger.d('Fetching recently viewed books from: $url');
+      final response = await http.get(url, headers: headers);
+      _logger.d('Received response with status code: ${response.statusCode}');
+      _logger.d('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final decodedResponse = jsonDecode(response.body);
+        _logger.d('Successfully decoded response: $decodedResponse');
+        return decodedResponse;
+      } else {
+        final errorData = jsonDecode(response.body);
+        _logger.e('Failed to fetch recently viewed books: ${errorData['message']}');
+        throw Exception('Failed to fetch recently viewed books: ${errorData['message']}');
+      }
+    } catch (e) {
+      _logger.e('An error occurred while fetching recently viewed books: $e');
+      throw Exception('An error occurred while fetching recently viewed books: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getGenreCounts() async {
+    final url = Uri.parse('${baseUrl}genre-counts');
+    final headers = await _getHeaders();
+
+    try {
+      final response = await http.get(url, headers: headers);
+      _logger.d('Received response with status code: ${response.statusCode}');
+      _logger.d('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        final errorData = jsonDecode(response.body);
+        _logger.e('Failed to fetch genre counts: ${errorData['message']}');
+        throw Exception('Failed to fetch genre counts: ${errorData['message']}');
       }
     } catch (e) {
       _logger.e('An error occurred: $e');

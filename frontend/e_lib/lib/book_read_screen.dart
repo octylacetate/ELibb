@@ -2,11 +2,17 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:pdfx/pdfx.dart';
 import 'package:http/http.dart' as http;
+import 'package:e_lib/service/apiservicebooks.dart';
 
 class BookRead extends StatefulWidget {
-  final String bookUrl; // Network URL for the PDF
+  final String bookUrl;
+  final String bookId;
 
-  const BookRead({required this.bookUrl, Key? key}) : super(key: key);
+  const BookRead({
+    required this.bookUrl,
+    required this.bookId,
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<BookRead> createState() => _BookReadState();
@@ -15,6 +21,11 @@ class BookRead extends StatefulWidget {
 class _BookReadState extends State<BookRead> {
   PdfController? _pdfController;
   bool _isLoading = true;
+  final BookService _bookService = BookService();
+  int _totalPages = 0;
+  int _currentPage = 1;
+  final TextEditingController _pageController = TextEditingController();
+  bool _isJumping = false;
 
   @override
   void initState() {
@@ -27,7 +38,14 @@ class _BookReadState extends State<BookRead> {
       final pdfData = await fetchPdf(widget.bookUrl);
       _pdfController = PdfController(
         document: PdfDocument.openData(pdfData),
+        initialPage: 1,
       );
+      
+      // Get total pages after document is loaded
+      final doc = await _pdfController?.document;
+      _totalPages = await doc?.pagesCount ?? 0;
+      _pageController.text = '1';
+      
       setState(() {
         _isLoading = false;
       });
@@ -36,6 +54,48 @@ class _BookReadState extends State<BookRead> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  void _updatePage(int newPage) {
+    if (newPage != _currentPage) {
+      setState(() {
+        _currentPage = newPage;
+        if (!_isJumping) {
+          _pageController.text = newPage.toString();
+        }
+      });
+      _updateReadingProgress();
+    }
+  }
+
+  void _jumpToPage() {
+    setState(() {
+      _isJumping = true;
+    });
+    int pageNumber = int.tryParse(_pageController.text) ?? _currentPage;
+    if (pageNumber < 1) pageNumber = 1;
+    if (pageNumber > _totalPages) pageNumber = _totalPages;
+    
+    _pageController.text = pageNumber.toString();
+    _pdfController?.jumpToPage(pageNumber - 1).then((_) {
+      setState(() {
+        _isJumping = false;
+      });
+    });
+  }
+
+  Future<void> _updateReadingProgress() async {
+    if (_totalPages > 0) {
+      final progress = _currentPage / _totalPages;
+      try {
+        await _bookService.updateReadingProgress(
+          widget.bookId,
+          progress,
+        );
+      } catch (e) {
+        debugPrint('Error updating reading progress: $e');
+      }
     }
   }
 
@@ -49,55 +109,53 @@ class _BookReadState extends State<BookRead> {
   }
 
   @override
-  void dispose() {
-    _pdfController?.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 219, 254, 250),
-        actions: <Widget>[
-          if (_pdfController != null) ...[
-            IconButton(
-              icon: const Icon(Icons.navigate_before),
-              onPressed: () {
-                _pdfController?.previousPage(
-                  curve: Curves.ease,
-                  duration: const Duration(milliseconds: 100),
-                );
-              },
-            ),
-            PdfPageNumber(
-              controller: _pdfController!,
-              builder: (_, loadingState, page, pagesCount) => Container(
-                alignment: Alignment.center,
-                child: Text(
-                  '$page/${pagesCount ?? 0}',
-                  style: const TextStyle(fontSize: 22),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text('Page $_currentPage of $_totalPages'),
+            const SizedBox(width: 20),
+            SizedBox(
+              width: 70,
+              child: TextField(
+                controller: _pageController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
+                onSubmitted: (_) => _jumpToPage(),
               ),
             ),
             IconButton(
               icon: const Icon(Icons.navigate_next),
-              onPressed: () {
-                _pdfController?.nextPage(
-                  curve: Curves.ease,
-                  duration: const Duration(milliseconds: 100),
-                );
-              },
+              onPressed: _jumpToPage,
             ),
           ],
-        ],
+        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+      body: _pdfController == null
+          ? const Center(child: Text('Error loading PDF'))
           : PdfView(
-              scrollDirection: Axis.vertical,
               controller: _pdfController!,
+              onPageChanged: _updatePage,
+              scrollDirection: Axis.horizontal,
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    _pdfController?.dispose();
+    _pageController.dispose();
+    super.dispose();
   }
 }

@@ -17,10 +17,15 @@ class Login extends StatefulWidget {
 class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final FocusNode _emailFocusNode = FocusNode();
+  final FocusNode _passwordFocusNode = FocusNode();
 
   final ApiService apiService = ApiService();
 
   void _login(BuildContext context) async {
+    // Unfocus any text fields before proceeding
+    FocusScope.of(context).unfocus();
+
     final email = _emailController.text;
     final password = _passwordController.text;
 
@@ -31,6 +36,8 @@ class _LoginState extends State<Login> {
       if (response['statusCode'] == 200) {
         await Provider.of<AuthProvider>(context, listen: false).setLoggedIn();
         if (!context.mounted) return;
+        
+        // Navigate to home screen after successful login
         context.go('/');
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -56,6 +63,8 @@ class _LoginState extends State<Login> {
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _emailFocusNode.dispose();
+    _passwordFocusNode.dispose();
     super.dispose();
   }
 
@@ -63,167 +72,179 @@ class _LoginState extends State<Login> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Align(
-                alignment: Alignment(
-                    1.0, -1.2), // Adjust alignment to position vertically
-                child: Container(
-                  width: 300,
-                  height: 300,
-                  child: Lottie.asset(
-                    "assets/images/lotie7.json",
-                    // reverse: true,
-                  ),
-                )),
-            Align(
-                alignment: Alignment(
-                    -1.0, 3.8), // Adjust alignment to position vertically
-                child: Container(
-                  width: 600,
-                  height: 600,
-                  child: Lottie.asset(
-                    "assets/images/lotie6.json",
-                    reverse: true,
-                  ),
-                )),
-            SingleChildScrollView(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 50.0),
-                child: Column(
-                  children: [
-                    SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 200.0),
-                      child: Image.asset(
-                        'assets/images/elib.png',
-                        height: 200,
-                      ),
+      body: GestureDetector(
+        onTap: () {
+          // Unfocus any text fields when tapping outside
+          FocusScope.of(context).unfocus();
+        },
+        child: SafeArea(
+          child: Stack(
+            children: [
+              Align(
+                  alignment: Alignment(
+                      1.0, -1.2), // Adjust alignment to position vertically
+                  child: Container(
+                    width: 300,
+                    height: 300,
+                    child: Lottie.asset(
+                      "assets/images/lotie7.json",
+                      // reverse: true,
                     ),
-                    Text(
-                      'Welcome!',
-                      style:
-                          TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                  )),
+              Align(
+                  alignment: Alignment(
+                      -1.0, 3.8), // Adjust alignment to position vertically
+                  child: Container(
+                    width: 600,
+                    height: 600,
+                    child: Lottie.asset(
+                      "assets/images/lotie6.json",
+                      reverse: true,
                     ),
-                    Text('Sign in to continue'),
-                    SizedBox(height: 20),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.lightBlue.shade50,
-                        borderRadius: BorderRadius.circular(30.0),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: TextField(
-                        controller: _emailController,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Email',
-                          hintStyle: TextStyle(color: Colors.grey),
+                  )),
+              SingleChildScrollView(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 50.0),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 200.0),
+                        child: Image.asset(
+                          'assets/images/elib.png',
+                          height: 200,
                         ),
                       ),
-                    ),
-                    SizedBox(height: 30),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.lightBlue.shade50,
-                        borderRadius: BorderRadius.circular(30.0),
+                      Text(
+                        'Welcome!',
+                        style:
+                            TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                      child: TextField(
-                        controller: _passwordController,
-                        decoration: InputDecoration(
-                          border: InputBorder.none,
-                          hintText: 'Password',
-                          hintStyle: TextStyle(color: Colors.grey),
+                      Text('Sign in to continue'),
+                      SizedBox(height: 20),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.lightBlue.shade50,
+                          borderRadius: BorderRadius.circular(30.0),
                         ),
-                        obscureText: true,
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: TextField(
+                          controller: _emailController,
+                          textInputAction: TextInputAction.next,
+                          onSubmitted: (_) {
+                            FocusScope.of(context).nextFocus();
+                          },
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Email',
+                            hintStyle: TextStyle(color: Colors.grey),
+                          ),
+                        ),
                       ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          child: TextButton(
-                            onPressed: () {
-                              context.push('/signup');
-                            },
-                            child: Text(
-                              'Forgot Password?',
-                              style: TextStyle(
-                                color: Color.fromARGB(255, 108, 182, 243),
+                      SizedBox(height: 30),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.lightBlue.shade50,
+                          borderRadius: BorderRadius.circular(30.0),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: TextField(
+                          controller: _passwordController,
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _login(context),
+                          decoration: InputDecoration(
+                            border: InputBorder.none,
+                            hintText: 'Password',
+                            hintStyle: TextStyle(color: Colors.grey),
+                          ),
+                          obscureText: true,
+                        ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Container(
+                            child: TextButton(
+                              onPressed: () {
+                                context.push('/signup');
+                              },
+                              child: Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: Color.fromARGB(255, 108, 182, 243),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 25),
-                    Container(
-                      height: 40,
-                      width: 200,
-                      child: ElevatedButton(
-                        onPressed: () => _login(context),
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Color.fromARGB(255, 0, 21, 44),
-                        ),
-                        child: Text(
-                          "Login",
-                          style: TextStyle(
-                            fontSize: 20,
+                        ],
+                      ),
+                      SizedBox(height: 25),
+                      Container(
+                        height: 40,
+                        width: 200,
+                        child: ElevatedButton(
+                          onPressed: () => _login(context),
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Color.fromARGB(255, 0, 21, 44),
+                          ),
+                          child: Text(
+                            "Login",
+                            style: TextStyle(
+                              fontSize: 20,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 20),
-                    Text('or '),
-                    SizedBox(height: 25),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: () {
-                          context.push('/signup');
-                        },
-                        style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Color.fromARGB(255, 0, 21, 44),
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 10),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset(
-                              'assets/images/file.png', // Path to your image asset
-                              height: 30,
-                            ),
-                            SizedBox(width: 10),
-                            Text('Continue with google'),
-                          ],
+                      SizedBox(height: 20),
+                      Text('or '),
+                      SizedBox(height: 25),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed: () {
+                            context.push('/signup');
+                          },
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Color.fromARGB(255, 0, 21, 44),
+                            padding: EdgeInsets.symmetric(
+                                horizontal: 20, vertical: 10),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Image.asset(
+                                'assets/images/file.png', // Path to your image asset
+                                height: 30,
+                              ),
+                              SizedBox(width: 10),
+                              Text('Continue with google'),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                    SizedBox(height: 25),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text("Don't have an account? "),
-                        TextButton(
-                            onPressed: () {
-                              context.push('/signup');
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor:
-                                  Color.fromARGB(255, 0, 21, 44), // Text color
-                            ),
-                            child: Text("Sign Up"))
-                      ],
-                    ),
-                  ],
+                      SizedBox(height: 25),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("Don't have an account? "),
+                          TextButton(
+                              onPressed: () {
+                                context.push('/signup');
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor:
+                                    Color.fromARGB(255, 0, 21, 44), // Text color
+                              ),
+                              child: Text("Sign Up"))
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

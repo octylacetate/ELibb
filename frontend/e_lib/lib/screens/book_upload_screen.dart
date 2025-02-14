@@ -1,10 +1,18 @@
-import 'dart:html' as html;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:e_lib/service/apiservicebooks.dart';
+import 'dart:html' as html;
+
+// Import colors from main.dart
+const primaryColor = Color.fromARGB(255, 219, 254, 250);
+const secondaryColor = Color.fromARGB(255, 17, 106, 136);
+const accentColor = Color.fromARGB(255, 100, 204, 199);
+const textDarkColor = Color.fromARGB(255, 0, 21, 44);
 
 class BookUploadScreen extends StatefulWidget {
+  const BookUploadScreen({Key? key}) : super(key: key);
+
   @override
   _BookUploadScreenState createState() => _BookUploadScreenState();
 }
@@ -19,94 +27,111 @@ class _BookUploadScreenState extends State<BookUploadScreen> {
   String? _bookFileName;
   Uint8List? _bookCoverBytes;
   String? _bookCoverFileName;
+  String _selectedGenre = 'Fantasy';
 
-  void _pickFile({required bool isCover}) async {
+  final List<String> _genres = [
+    'Fantasy',
+    'Sci-fi',
+    'Mystery',
+    'Romance',
+    'Historical-fi',
+    'Thriller',
+    'Non-fiction',
+    'Young-adult',
+    "Children's-literature"
+  ];
+
+  Future<void> pickBookFile() async {
     try {
-      html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
-      uploadInput.accept = isCover ? 'image/*' : 'application/pdf';
+      final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+      uploadInput.accept = 'application/pdf';
       uploadInput.click();
 
-      uploadInput.onChange.listen((e) {
-        final files = uploadInput.files;
-        if (files!.isEmpty) return;
-        final file = files.first;
+      await uploadInput.onChange.first;
+      final files = uploadInput.files;
+      if (files != null && files.isNotEmpty) {
+        final file = files[0];
         final reader = html.FileReader();
-
-        reader.onLoadEnd.listen((e) {
-          setState(() {
-            if (isCover) {
-              _bookCoverBytes = reader.result as Uint8List?;
-              _bookCoverFileName = file.name;
-            } else {
-              _bookBytes = reader.result as Uint8List?;
-              _bookFileName = file.name;
-            }
-          });
-        });
-
         reader.readAsArrayBuffer(file);
-      });
+        await reader.onLoad.first;
+
+        setState(() {
+          _bookBytes = Uint8List.fromList(reader.result as List<int>);
+          _bookFileName = file.name;
+        });
+      }
     } catch (e) {
-      _logger.e('An error occurred while picking the file: $e');
+      _logger.e('Error selecting PDF file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error selecting PDF file: $e')),
+      );
+    }
+  }
+
+  Future<void> pickCoverImage() async {
+    try {
+      final html.FileUploadInputElement uploadInput = html.FileUploadInputElement();
+      uploadInput.accept = 'image/*';
+      uploadInput.click();
+
+      await uploadInput.onChange.first;
+      final files = uploadInput.files;
+      if (files != null && files.isNotEmpty) {
+        final file = files[0];
+        final reader = html.FileReader();
+        reader.readAsArrayBuffer(file);
+        await reader.onLoad.first;
+
+        setState(() {
+          _bookCoverBytes = Uint8List.fromList(reader.result as List<int>);
+          _bookCoverFileName = file.name;
+        });
+      }
+    } catch (e) {
+      _logger.e('Error selecting cover image: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error selecting cover image: $e')),
+      );
     }
   }
 
   void _uploadBook() async {
-    final bookTitle = _bookTitleController.text;
-    final author = _authorController.text;
-    final description = _descriptionController.text;
-
-    if (bookTitle.isEmpty ||
-        author.isEmpty ||
-        description.isEmpty ||
+    if (_bookTitleController.text.isEmpty ||
+        _authorController.text.isEmpty ||
+        _descriptionController.text.isEmpty ||
         _bookBytes == null ||
-        _bookFileName == null ||
-        _bookCoverBytes == null ||
-        _bookCoverFileName == null) {
+        _bookCoverBytes == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('All fields are required'),
-          backgroundColor: Color.fromARGB(255, 17, 106, 136),
-        ),
+        SnackBar(content: Text('Please fill all fields and select files')),
       );
       return;
     }
 
     try {
       final response = await bookService.uploadBook(
-        bookTitle,
+        _bookTitleController.text,
         _bookBytes!,
         _bookFileName!,
         _bookCoverBytes!,
         _bookCoverFileName!,
-        author,
-        description,
+        _authorController.text,
+        _descriptionController.text,
+        _selectedGenre,
       );
+
       if (response['statusCode'] == 200) {
-        _logger.i('Book uploaded successfully');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Book uploaded successfully'),
-            backgroundColor: Color.fromARGB(255, 17, 106, 136),
-          ),
+          SnackBar(content: Text('Book uploaded successfully')),
         );
         _clearForm();
       } else {
-        _logger.e('Failed to upload book: ${response['message']}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to upload book: ${response['message']}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to upload book: ${response['message']}')),
         );
       }
     } catch (e) {
-      _logger.e('Error uploading book: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error uploading book: $e'),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text('Error uploading book: $e')),
       );
     }
   }
@@ -120,6 +145,7 @@ class _BookUploadScreenState extends State<BookUploadScreen> {
       _bookFileName = null;
       _bookCoverBytes = null;
       _bookCoverFileName = null;
+      _selectedGenre = 'Fantasy';
     });
   }
 
@@ -127,14 +153,10 @@ class _BookUploadScreenState extends State<BookUploadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color.fromARGB(255, 219, 254, 250),
+        backgroundColor: primaryColor,
         title: Text(
-          'Upload New Book',
-          style: TextStyle(
-            color: Color.fromARGB(255, 0, 21, 44),
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Sedan',
-          ),
+          'Upload Book',
+          style: TextStyle(color: textDarkColor, fontWeight: FontWeight.bold),
         ),
         elevation: 0,
       ),
@@ -143,16 +165,13 @@ class _BookUploadScreenState extends State<BookUploadScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color.fromARGB(255, 219, 254, 250),
-              Colors.white,
-            ],
+            colors: [primaryColor, Colors.white],
           ),
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: EdgeInsets.all(24.0),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Card(
                 elevation: 4,
@@ -160,86 +179,167 @@ class _BookUploadScreenState extends State<BookUploadScreen> {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.all(20.0),
+                  padding: EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Book Information',
+                        'Book Details',
                         style: TextStyle(
+                          color: textDarkColor,
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color.fromARGB(255, 0, 21, 44),
-                          fontFamily: 'Sedan',
                         ),
                       ),
                       SizedBox(height: 20),
-                      _buildTextField(
+                      TextField(
                         controller: _bookTitleController,
-                        label: 'Book Title',
-                        icon: Icons.book,
+                        decoration: InputDecoration(
+                          labelText: 'Book Title',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
                       ),
                       SizedBox(height: 16),
-                      _buildTextField(
+                      TextField(
                         controller: _authorController,
-                        label: 'Author',
-                        icon: Icons.person,
+                        decoration: InputDecoration(
+                          labelText: 'Author',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
                       ),
                       SizedBox(height: 16),
-                      _buildTextField(
+                      TextField(
                         controller: _descriptionController,
-                        label: 'Description',
-                        icon: Icons.description,
-                        maxLines: 4,
-                      ),
-                      SizedBox(height: 24),
-                      _buildFileUploadSection(
-                        title: 'Book PDF',
-                        fileName: _bookFileName,
-                        onTap: () => _pickFile(isCover: false),
-                        icon: Icons.upload_file,
+                        decoration: InputDecoration(
+                          labelText: 'Description',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        maxLines: 3,
                       ),
                       SizedBox(height: 16),
-                      _buildFileUploadSection(
-                        title: 'Book Cover',
-                        fileName: _bookCoverFileName,
-                        onTap: () => _pickFile(isCover: true),
-                        icon: Icons.image,
-                      ),
-                      SizedBox(height: 24),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: _clearForm,
-                            icon: Icon(Icons.clear),
-                            label: Text('Clear'),
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Color.fromARGB(255, 0, 21, 44),
-                              backgroundColor: Colors.white,
-                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
-                              ),
-                            ),
+                      DropdownButtonFormField<String>(
+                        value: _selectedGenre,
+                        decoration: InputDecoration(
+                          labelText: 'Genre',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          ElevatedButton.icon(
-                            onPressed: _uploadBook,
-                            icon: Icon(Icons.cloud_upload),
-                            label: Text('Upload Book'),
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Colors.white,
-                              backgroundColor: Color.fromARGB(255, 17, 106, 136),
-                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                          ),
-                        ],
+                          filled: true,
+                          fillColor: Colors.white,
+                        ),
+                        items: _genres.map((String genre) {
+                          return DropdownMenuItem<String>(
+                            value: genre,
+                            child: Text(genre),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          if (newValue != null) {
+                            setState(() {
+                              _selectedGenre = newValue;
+                            });
+                          }
+                        },
                       ),
                     ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 20),
+              Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(20.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Upload Files',
+                        style: TextStyle(
+                          color: textDarkColor,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: pickBookFile,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: secondaryColor,
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.upload_file, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              _bookFileName ?? 'Select PDF File',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: pickCoverImage,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: secondaryColor,
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.image, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text(
+                              _bookCoverFileName ?? 'Select Cover Image',
+                              style: TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(height: 24),
+              ElevatedButton(
+                onPressed: _uploadBook,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: Text(
+                  'Upload Book',
+                  style: TextStyle(
+                    color: textDarkColor,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -249,84 +349,5 @@ class _BookUploadScreenState extends State<BookUploadScreen> {
       ),
     );
   }
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    int maxLines = 1,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color.fromARGB(255, 100, 204, 199)),
-      ),
-      child: TextField(
-        controller: controller,
-        maxLines: maxLines,
-        decoration: InputDecoration(
-          labelText: label,
-          prefixIcon: Icon(icon, color: Color.fromARGB(255, 17, 106, 136)),
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          labelStyle: TextStyle(color: Color.fromARGB(255, 0, 21, 44)),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFileUploadSection({
-    required String title,
-    required String? fileName,
-    required VoidCallback onTap,
-    required IconData icon,
-  }) {
-    return Container(
-      padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Color.fromARGB(255, 100, 204, 199)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: Color.fromARGB(255, 0, 21, 44),
-            ),
-          ),
-          SizedBox(height: 8),
-          InkWell(
-            onTap: onTap,
-            child: Container(
-              padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-              decoration: BoxDecoration(
-                color: Color.fromARGB(255, 219, 254, 250),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(icon, color: Color.fromARGB(255, 17, 106, 136)),
-                  SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      fileName ?? 'Click to upload file',
-                      style: TextStyle(
-                        color: Color.fromARGB(255, 0, 21, 44),
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
+

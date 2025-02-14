@@ -171,8 +171,7 @@ class _MyBookState extends State<MyBook> {
             ),
           );
         },
-        gapLocation: GapLocation.center,
-        notchSmoothness: NotchSmoothness.verySmoothEdge,
+        gapLocation: GapLocation.none,
         leftCornerRadius: 8,
         rightCornerRadius: 8,
         backgroundColor: const Color.fromARGB(255, 17, 106, 136),

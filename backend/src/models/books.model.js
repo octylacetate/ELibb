@@ -27,6 +27,13 @@ const bookSchema = mongoose.Schema({
         required: true
     },
 
+    genre: {
+        type: String,
+        required: true,
+        enum: ['Fantasy', 'Sci-fi', 'Mystery', 'Romance', 'Historical-fi', 'Thriller', 'Non-fiction', 'Young-adult', "Children's-literature"],
+        default: 'Fantasy'
+    },
+
     publishedBy:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
@@ -45,8 +52,23 @@ const bookSchema = mongoose.Schema({
     favourite:{
         type: mongoose.Schema.Types.ObjectId,
         ref: "Favourite"
-    }
+    },
 
+    recentlyViewedBy: [{
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        },
+        viewedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
+
+    progress: {
+        type: Number,
+        default: 0
+    }
 
 },{timestamps: true})
 

@@ -5,7 +5,7 @@ import 'package:logger/logger.dart';
 
 class FavouriteService {
   static final Logger _logger = Logger();
-  final String baseUrl = "http://localhost:3000/api/v1/favourite/";
+  final String baseUrl = "http://localhost:8000/api/v1/favourite/";
   static const FlutterSecureStorage storage = FlutterSecureStorage();
 
   Future<Map<String, String>> _getHeaders() async {

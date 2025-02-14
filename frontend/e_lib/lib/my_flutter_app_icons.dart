@@ -37,4 +37,5 @@ class MyFlutterApp {
   static const IconData search = IconData(0xe801, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData supervisor_account = IconData(0xe802, fontFamily: _kFontFam, fontPackage: _kFontPkg);
   static const IconData library_icon = IconData(0xe823, fontFamily: _kFontFam, fontPackage: _kFontPkg);
+  static const IconData upload = IconData(0xe824, fontFamily: _kFontFam, fontPackage: _kFontPkg);
 }

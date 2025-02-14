@@ -6,7 +6,7 @@ import 'package:logger/logger.dart';
 
 class ApiService {
   static final Logger _logger = Logger();
-  static const baseUrl = 'http://localhost:3000/api/v1/users/';
+  static const baseUrl = 'http://localhost:8000/api/v1/users/';
   static const FlutterSecureStorage storage = FlutterSecureStorage();
 
   Future<Map<String, String>> _getHeaders() async {
@@ -96,6 +96,7 @@ class ApiService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': email,
+          'username': email,
           'password': password,
         }),
       );

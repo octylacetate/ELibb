@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:e_lib/elib_home.dart';
 import 'package:e_lib/service/apiclassusers.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:cross_file/cross_file.dart';
 
 class Signup extends StatefulWidget {
   @override
@@ -73,14 +74,20 @@ class _SignupState extends State<Signup> {
   }
 
   Future<void> _pickAvatar() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result != null && result.files.isNotEmpty) {
-      final file = result.files.first;
-      setState(() {
-        _avatar = file.bytes;
-        _avatarName = file.name;
-      });
-      _logger.d('Selected avatar file: ${file.name}');
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      
+      if (image != null) {
+        final bytes = await image.readAsBytes();
+        setState(() {
+          _avatar = bytes;
+          _avatarName = image.name;
+        });
+        _logger.d('Selected avatar file: ${image.name}');
+      }
+    } catch (e) {
+      _logger.e('An error occurred while picking the image: $e');
     }
   }
 

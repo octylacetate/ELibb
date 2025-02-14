@@ -5,6 +5,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
 import 'package:e_lib/book_read_screen.dart';
 import 'package:e_lib/service/apiservicebooks.dart';
+import 'package:go_router/go_router.dart';
 
 class BookDetailScreen extends StatefulWidget {
   final String bookId;
@@ -23,7 +24,7 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
   bool isError = false;
   bool isFavourite = false;
   Map<String, dynamic>? book;
-  final String baseUrl = "http://localhost:3000/";
+  final String baseUrl = "http://localhost:8000/";
 
   Future<void> fetchBookDetails() async {
     try {
@@ -185,24 +186,16 @@ class _BookDetailScreenState extends State<BookDetailScreen> {
                             const Padding(padding: EdgeInsets.all(4)),
                             ElevatedButton(
                               onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BookRead(
-                                        bookUrl: baseUrl + book!['bookPath']),
-                                  ),
-                                );
+                                final encodedUrl = Uri.encodeComponent(baseUrl + book!['bookPath']);
+                                context.go('/read-book?url=$encodedUrl&bookId=${widget.bookId}');
                               },
                               style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith(
+                                backgroundColor: MaterialStateProperty.resolveWith(
                                   (states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
+                                    if (states.contains(MaterialState.pressed)) {
                                       return null;
                                     }
-                                    return const Color.fromARGB(
-                                        255, 219, 254, 250);
+                                    return const Color.fromARGB(255, 219, 254, 250);
                                   },
                                 ),
                                 shape: MaterialStateProperty.all(

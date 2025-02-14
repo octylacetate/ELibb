@@ -12,6 +12,31 @@ import 'package:flutter/material.dart';
 import 'package:logger/logger.dart';
 import 'package:lottie/lottie.dart';
 import 'package:go_router/go_router.dart';
+import 'package:e_lib/service/apiservicebooks.dart';
+import 'package:e_lib/book_detail_screen.dart';
+import 'package:e_lib/service/apiservicebooks.dart';
+
+// Import colors from main.dart
+const primaryColor = Color.fromARGB(255, 219, 254, 250);
+const secondaryColor = Color.fromARGB(255, 17, 106, 136);
+const accentColor = Color.fromARGB(255, 100, 204, 199);
+const textDarkColor = Color.fromARGB(255, 0, 21, 44);
+const warmAccentColor = Color.fromARGB(255, 255, 183, 77);
+const coralAccentColor = Color.fromARGB(255, 255, 127, 80);
+const darkPrimaryColor = Color.fromARGB(255, 176, 223, 219);
+const subtleBackgroundColor = Color.fromARGB(20, 17, 106, 136);
+
+const primaryGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [primaryColor, darkPrimaryColor],
+);
+
+const accentGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [warmAccentColor, coralAccentColor],
+);
 
 class Profile extends StatefulWidget {
   final bool isLoggedIn;
@@ -64,7 +89,7 @@ class _ProfileState extends State<Profile> {
     var screenWidth = MediaQuery.of(context).size.width;
     var screenHeight = MediaQuery.of(context).size.height;
     const String baseUrl =
-        "http://localhost:3000/"; // Replace with your backend URL root
+        "http://localhost:8000/"; // Replace with your backend URL root
 
     return Scaffold(
       appBar: AppBar(
@@ -89,13 +114,12 @@ class _ProfileState extends State<Profile> {
             child: ElevatedButton(
               onPressed: () async {
                 if (widget.isLoggedIn) {
-                  final currentLocation = GoRouterState.of(context).uri.path;
                   await widget.logout();
                   if (context.mounted) {
-                    context.go('/login?from=$currentLocation');
+                    context.go('/login');
                   }
                 } else {
-                  context.go('/login?from=/profile');
+                  context.go('/login');
                 }
               },
               style: ButtonStyle(
@@ -109,8 +133,7 @@ class _ProfileState extends State<Profile> {
                 ),
                 shape: MaterialStateProperty.all(
                   RoundedRectangleBorder(
-                    side:
-                        const BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
+                    side: const BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
                     borderRadius: BorderRadius.circular(40),
                   ),
                 ),
@@ -198,6 +221,15 @@ class _ProfileState extends State<Profile> {
               child: ListTile(
                 leading: Icon(MyFlutterApp.library_icon),
                 title: Text("Library"),
+              ),
+            ),
+            InkWell(
+              onTap: () {
+                context.go('/upload-book');
+              },
+              child: ListTile(
+                leading: Icon(Icons.upload_file),
+                title: Text("Upload Book"),
               ),
             ),
             InkWell(
@@ -444,10 +476,8 @@ class _ProfileState extends State<Profile> {
                       overlayColor: MaterialStateProperty.resolveWith<Color?>(
                         (Set<MaterialState> states) {
                           if (states.contains(MaterialState.pressed))
-                            return Color.fromARGB(
-                                255, 17, 106, 136); //<-- SEE HERE
-                          return Color.fromARGB(255, 219, 254,
-                              250); // Defer to the widget's default.
+                            return Color.fromARGB(255, 17, 106, 136);
+                          return Color.fromARGB(255, 219, 254, 250);
                         },
                       ),
                     ),
@@ -516,5 +546,262 @@ class _ProfileState extends State<Profile> {
     if (context.mounted) {
       context.go('/login?from=$currentLocation');
     }
+  }
+}
+
+class RecentlyViewedBooks extends StatefulWidget {
+  @override
+  _RecentlyViewedBooksState createState() => _RecentlyViewedBooksState();
+}
+
+class _RecentlyViewedBooksState extends State<RecentlyViewedBooks> {
+  final BookService _bookService = BookService();
+  bool _isLoading = true;
+  bool _isError = false;
+  List<dynamic> _recentBooks = [];
+  Map<String, bool> _hoveredStates = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchRecentlyViewedBooks();
+  }
+
+  Future<void> _fetchRecentlyViewedBooks() async {
+    try {
+      final response = await _bookService.getRecentlyViewedBooks();
+      setState(() {
+        _recentBooks = response['data']['recentBooks'];
+        _isLoading = false;
+        for (var book in _recentBooks) {
+          _hoveredStates[book['book']['_id']] = false;
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _isError = true;
+        _isLoading = false;
+      });
+      print('Error fetching recently viewed books: $e');
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Center(child: CircularProgressIndicator());
+    }
+    if (_isError) {
+      return Center(child: Text('Failed to load recently viewed books'));
+    }
+    if (_recentBooks.isEmpty) {
+      return Center(child: Text('No recently viewed books'));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Text(
+            'Recently Viewed Books',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Color.fromARGB(255, 0, 21, 44),
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            itemCount: _recentBooks.length,
+            itemBuilder: (context, index) {
+              final recentBook = _recentBooks[index];
+              final book = recentBook['book'];
+              final spineColor = Color((index * 12345) % 0xFFFFFF).withOpacity(1.0);
+              final progress = recentBook['progress'] ?? 0.0;
+              final isHovered = _hoveredStates[book['_id']] ?? false;
+              
+              return AnimatedContainer(
+                duration: Duration(milliseconds: 800),
+                transform: isHovered ? (Matrix4.identity()..translate(0, -10)) : Matrix4.identity(),
+                height: 160,
+                margin: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: MouseRegion(
+                  onEnter: (_) => setState(() {
+                    _hoveredStates[book['_id']] = true;
+                  }),
+                  onExit: (_) => setState(() {
+                    _hoveredStates[book['_id']] = false;
+                  }),
+                  child: Row(
+                    children: [
+                      // Book Spine
+                      Container(
+                        width: 30,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [spineColor.withOpacity(0.7), spineColor],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.horizontal(left: Radius.circular(8)),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isHovered ? spineColor.withOpacity(0.6) : spineColor.withOpacity(0.4),
+                              offset: Offset(2, 2),
+                              blurRadius: isHovered ? 12 : 8,
+                              spreadRadius: isHovered ? 2 : 0,
+                            ),
+                          ],
+                        ),
+                        child: RotatedBox(
+                          quarterTurns: 3,
+                          child: Center(
+                            child: Text(
+                              book['bookTitle'] ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Book Content
+                      Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.horizontal(right: Radius.circular(8)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: isHovered ? Colors.black26 : Colors.black12,
+                                offset: Offset(2, 2),
+                                blurRadius: isHovered ? 12 : 8,
+                                spreadRadius: isHovered ? 2 : 0,
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            color: Colors.transparent,
+                            child: InkWell(
+                              onTap: () => context.go('/book/${book['_id']}'),
+                              child: Padding(
+                                padding: EdgeInsets.all(16),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            book['bookTitle'] ?? '',
+                                            style: TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color.fromARGB(255, 0, 21, 44),
+                                            ),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            book['author'] ?? 'Unknown Author',
+                                            style: TextStyle(
+                                              color: Color.fromARGB(255, 0, 21, 44).withOpacity(0.7),
+                                            ),
+                                          ),
+                                          SizedBox(height: 16),
+                                          // Reading Progress Section
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Reading Progress',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color.fromARGB(255, 0, 21, 44).withOpacity(0.7),
+                                                ),
+                                              ),
+                                              SizedBox(height: 4),
+                                              Stack(
+                                                children: [
+                                                  Container(
+                                                    height: 4,
+                                                    width: double.infinity,
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.grey.withOpacity(0.2),
+                                                      borderRadius: BorderRadius.circular(2),
+                                                    ),
+                                                  ),
+                                                  Container(
+                                                    height: 4,
+                                                    width: MediaQuery.of(context).size.width * 0.3 * progress,
+                                                    decoration: BoxDecoration(
+                                                      gradient: LinearGradient(
+                                                        colors: [
+                                                          Color.fromARGB(255, 255, 183, 77),
+                                                          Color.fromARGB(255, 255, 127, 80),
+                                                        ],
+                                                        begin: Alignment.centerLeft,
+                                                        end: Alignment.centerRight,
+                                                      ),
+                                                      borderRadius: BorderRadius.circular(2),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              SizedBox(height: 4),
+                                              Text(
+                                                '${(progress * 100).toInt()}% completed',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  color: Color.fromARGB(255, 0, 21, 44).withOpacity(0.5),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    // Book Cover Preview
+                                    AnimatedContainer(
+                                      duration: Duration(milliseconds: 800),
+                                      width: isHovered ? 120 : 80,
+                                      height: double.infinity,
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.horizontal(right: Radius.circular(8)),
+                                        image: DecorationImage(
+                                          image: NetworkImage('http://localhost:3000/${book['bookCover']}'),
+                                          fit: BoxFit.cover,
+                                        ),
+                                        boxShadow: isHovered ? [
+                                          BoxShadow(
+                                            color: Colors.black26,
+                                            offset: Offset(-2, 0),
+                                            blurRadius: 6,
+                                          ),
+                                        ] : [],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
   }
 }

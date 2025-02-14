@@ -4,8 +4,6 @@ import 'package:e_lib/service/apiservicebooks.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:logger/logger.dart';
-import 'package:carousel_slider/carousel_slider.dart';
-import 'package:dots_indicator/dots_indicator.dart';
 import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
 import 'login.dart';
 import 'book_detail_screen.dart';
@@ -16,6 +14,28 @@ import 'my_book.dart';
 import 'my_flutter_app_icons.dart';
 import 'profile.dart';
 import 'package:go_router/go_router.dart';
+
+// Import colors from main.dart
+const primaryColor = Color.fromARGB(255, 219, 254, 250);
+const secondaryColor = Color.fromARGB(255, 17, 106, 136);
+const accentColor = Color.fromARGB(255, 100, 204, 199);
+const textDarkColor = Color.fromARGB(255, 0, 21, 44);
+const warmAccentColor = Color.fromARGB(255, 255, 183, 77);
+const coralAccentColor = Color.fromARGB(255, 255, 127, 80);
+const darkPrimaryColor = Color.fromARGB(255, 176, 223, 219);
+const subtleBackgroundColor = Color.fromARGB(20, 17, 106, 136);
+
+const primaryGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [primaryColor, darkPrimaryColor],
+);
+
+const accentGradient = LinearGradient(
+  begin: Alignment.topLeft,
+  end: Alignment.bottomRight,
+  colors: [warmAccentColor, coralAccentColor],
+);
 
 class ELib extends StatefulWidget {
   final bool isLoggedIn;
@@ -35,15 +55,15 @@ class ELib extends StatefulWidget {
 
 class _ELibState extends State<ELib> {
   static final Logger _logger = Logger();
-  CarouselController controller = CarouselController();
   bool isPressed = false;
-  int currentIndex = 0;
   int selectedIndex = 0;
   List<dynamic> books = [];
   bool isLoading = true;
   bool isError = false;
+  String selectedGenre = 'All genres';
+  Map<String, int> _genreCounts = {};
 
-  final String baseUrl = "http://localhost:3000/";
+  final String baseUrl = "http://localhost:8000/";
 
   List<String> genres = [
     'All genres',
@@ -58,11 +78,12 @@ class _ELibState extends State<ELib> {
     'Children\'s-literature'
   ];
 
-  List<IconData> icons = [
-    MyFlutterApp.home,
-    MyFlutterApp.search,
-    MyFlutterApp.library_icon,
-    MyFlutterApp.supervisor_account,
+  List<String> books_imgs = [
+    'cover_imgs/mistborn-bookimg.jpeg',
+    'cover_imgs/lord-of-the-rings-bookimg.jpg',
+    'cover_imgs/A_Song_of_Ice_and_Fire-bookimg.jpg',
+    'cover_imgs/the-mistborn-bookimg.jpeg',
+    'cover_imgs/the-nature-of-wind-bookimg.jpg'
   ];
 
   List screens = [
@@ -74,6 +95,13 @@ class _ELibState extends State<ELib> {
   final ApiService apiService = ApiService();
   final BookService bookService = BookService();
   Map<String, dynamic>? userData;
+
+  List<IconData> icons = [
+    MyFlutterApp.home,
+    MyFlutterApp.search,
+    MyFlutterApp.library_icon,
+    MyFlutterApp.supervisor_account,
+  ];
 
   Future<void> fetchUserData() async {
     try {
@@ -93,12 +121,14 @@ class _ELibState extends State<ELib> {
 
   Future<void> fetchBooks() async {
     try {
-      final response = await bookService.getAllBooks(1); // Assuming page 1
+      final response = await bookService.getAllBooks(1, selectedGenre == 'All genres' ? null : selectedGenre);
       setState(() {
         books = response['data']['allBooks'];
         isLoading = false;
         isError = false;
       });
+      // Refresh genre counts after fetching books
+      await _fetchGenreCounts();
     } catch (error) {
       setState(() {
         isLoading = false;
@@ -111,11 +141,34 @@ class _ELibState extends State<ELib> {
     }
   }
 
+  Future<void> _fetchGenreCounts() async {
+    try {
+      final response = await bookService.getGenreCounts();
+      if (response['statusCode'] == 200) {
+        setState(() {
+          _genreCounts = Map<String, int>.from(response['data']);
+          // Calculate total for 'All genres'
+          int total = 0;
+          _genreCounts.forEach((key, value) {
+            if (key != 'All genres') {
+              total += value;
+            }
+          });
+          _genreCounts['All genres'] = total;
+        });
+        _logger.d('Genre counts: $_genreCounts');
+      }
+    } catch (e) {
+      _logger.e('Error fetching genre counts: $e');
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     fetchUserData();
     fetchBooks();
+    _fetchGenreCounts();
   }
 
   @override
@@ -138,18 +191,10 @@ class _ELibState extends State<ELib> {
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: ElevatedButton(
-              onPressed: () {
-                if (widget.isLoggedIn) {
-                  widget.logout();
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => Login()),
-                  );
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => Login()),
-                  );
+              onPressed: () async {
+                await widget.logout();
+                if (context.mounted) {
+                  context.go('/login');
                 }
               },
               style: ButtonStyle(
@@ -270,6 +315,24 @@ class _ELibState extends State<ELib> {
               ),
             ),
             InkWell(
+              onTap: () {
+                context.go('/upload-book');
+              },
+              child: ListTile(
+                leading: Icon(Icons.upload_file),
+                title: Text("Upload Book"),
+              ),
+            ),
+            InkWell(
+              onTap: () {
+                context.go('/favorites');
+              },
+              child: ListTile(
+                leading: Icon(Icons.favorite),
+                title: Text("Favorites"),
+              ),
+            ),
+            InkWell(
               onTap: () {},
               child: ListTile(
                 leading: Icon(Help.help_circled),
@@ -296,60 +359,41 @@ class _ELibState extends State<ELib> {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Stack(
-                      alignment: Alignment.topCenter,
-                      children: [
-                        CarouselSlider(
-                          carouselController: controller,
-                          items: [
-                            buildCarouselItem('cover_imgs/mistborn_slide.png',
-                                'Mistborn', 'Brandon Sanderson'),
-                            buildCarouselItem(
-                                'cover_imgs/lordofrings_slide.png',
-                                'Lord of the Rings',
-                                'J.R.R. Tolkien'),
-                            buildCarouselItem('cover_imgs/nameofwind_slide.png',
-                                'Name of the Wind', 'Patrick Rothfuss'),
+                    Container(
+                      height: 180,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Color.fromARGB(255, 219, 254, 250),
+                            Colors.white,
                           ],
-                          options: CarouselOptions(
-                            height: 180.0,
-                            enlargeCenterPage: true,
-                            autoPlay: true,
-                            aspectRatio: 16 / 9,
-                            autoPlayCurve: Curves.fastOutSlowIn,
-                            enableInfiniteScroll: true,
-                            autoPlayAnimationDuration:
-                                const Duration(milliseconds: 800),
-                            viewportFraction: 0.8,
-                            onPageChanged: (index, reason) {
-                              setState(() {
-                                currentIndex = index;
-                              });
-                            },
-                          ),
                         ),
-                        Positioned(
-                          bottom: 6.0,
-                          left: 100.0,
-                          child: DotsIndicator(
-                            dotsCount: 3,
-                            position: currentIndex,
-                            onTap: (position) {
-                              controller.animateToPage(position);
-                            },
-                            decorator: DotsDecorator(
-                              color: const Color.fromARGB(255, 218, 200, 202),
-                              activeColor:
-                                  const Color.fromARGB(255, 179, 144, 149),
-                              size: const Size.square(8.0),
-                              activeSize: const Size(14, 8),
-                              activeShape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Welcome to eLib',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Color.fromARGB(255, 0, 21, 44),
                               ),
                             ),
-                          ),
+                            SizedBox(height: 8),
+                            Text(
+                              'Discover your next favorite book',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Color.fromARGB(255, 17, 106, 136),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                     SizedBox(
                       height: 45,
@@ -358,54 +402,65 @@ class _ELibState extends State<ELib> {
                         shrinkWrap: true,
                         scrollDirection: Axis.horizontal,
                         itemBuilder: (context, index) {
+                          final genre = genres[index];
+                          final isSelected = genre == selectedGenre;
                           return Padding(
                             padding: const EdgeInsets.fromLTRB(8, 8, 0, 8),
                             child: ElevatedButton(
                               onPressed: () {
-                                Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => ELib(
-                                            isLoggedIn: widget.isLoggedIn,
-                                            logout: widget.logout)));
+                                setState(() {
+                                  selectedGenre = genre;
+                                  isLoading = true;
+                                });
+                                fetchBooks();
                               },
                               style: ButtonStyle(
-                                backgroundColor:
-                                    MaterialStateProperty.resolveWith(
+                                backgroundColor: MaterialStateProperty.resolveWith(
                                   (states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
-                                      return null;
-                                    }
-                                    return const Color.fromARGB(
-                                        255, 219, 254, 250);
+                                    if (states.contains(MaterialState.pressed)) return null;
+                                    return selectedGenre == genre
+                                        ? const Color.fromARGB(255, 17, 106, 136)
+                                        : const Color.fromARGB(255, 219, 254, 250);
                                   },
                                 ),
                                 shape: MaterialStateProperty.all(
                                   RoundedRectangleBorder(
-                                    side: const BorderSide(
-                                        color: Color.fromARGB(255, 0, 21, 44)),
+                                    side: BorderSide(color: Color.fromARGB(255, 0, 21, 44)),
                                     borderRadius: BorderRadius.circular(40),
                                   ),
                                 ),
-                                overlayColor:
-                                    MaterialStateProperty.resolveWith<Color?>(
-                                  (Set<MaterialState> states) {
-                                    if (states
-                                        .contains(MaterialState.pressed)) {
-                                      return const Color.fromARGB(
-                                          255, 17, 106, 136);
-                                    }
-                                    return const Color.fromARGB(
-                                        255, 219, 254, 250);
-                                  },
-                                ),
                               ),
-                              child: Text(
-                                genres[index],
-                                style: const TextStyle(
-                                  color: Color.fromARGB(255, 0, 21, 44),
-                                ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    genre,
+                                    style: TextStyle(
+                                      color: selectedGenre == genre
+                                          ? Colors.white
+                                          : Color.fromARGB(255, 0, 21, 44),
+                                    ),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: selectedGenre == genre
+                                          ? Colors.white.withOpacity(0.2)
+                                          : const Color.fromARGB(255, 17, 106, 136).withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${_genreCounts[genre] ?? 0}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: selectedGenre == genre
+                                            ? Colors.white
+                                            : const Color.fromARGB(255, 17, 106, 136),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           );
@@ -417,69 +472,147 @@ class _ELibState extends State<ELib> {
                         itemCount: books.length,
                         scrollDirection: Axis.vertical,
                         shrinkWrap: true,
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 0,
-                                mainAxisSpacing: 4,
-                                mainAxisExtent: 400),
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                          mainAxisExtent: 320,
+                        ),
                         itemBuilder: (context, index) {
                           final book = books[index];
                           final bookCoverUrl = baseUrl + book['bookCover'];
                           return Padding(
-                            padding: const EdgeInsets.fromLTRB(2, 2, 2, 2),
-                            child: InkWell(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        BookDetailScreen(bookId: book['_id']),
-                                  ),
-                                );
-                              },
-                              child: Card(
-                                shadowColor:
-                                    const Color.fromARGB(255, 17, 106, 136),
-                                surfaceTintColor:
-                                    const Color.fromARGB(255, 219, 254, 250),
-                                color: const Color.fromARGB(255, 219, 254, 250),
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.fromLTRB(0, 8, 0, 4),
-                                  child: Column(
-                                    children: [
-                                      Flexible(
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(20),
-                                            image: DecorationImage(
-                                              image: NetworkImage(bookCoverUrl),
-                                              fit: BoxFit.fill,
+                            padding: const EdgeInsets.all(4.0),
+                            child: MouseRegion(
+                              child: AnimatedContainer(
+                                duration: Duration(milliseconds: 200),
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            BookDetailScreen(bookId: book['_id']),
+                                      ),
+                                    );
+                                  },
+                                  child: Card(
+                                    elevation: 8,
+                                    shadowColor: secondaryColor.withOpacity(0.4),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(15),
+                                    ),
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        borderRadius: BorderRadius.circular(15),
+                                        gradient: LinearGradient(
+                                          begin: Alignment.topCenter,
+                                          end: Alignment.bottomCenter,
+                                          colors: [
+                                            primaryColor,
+                                            Colors.white,
+                                          ],
+                                        ),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          // Book Cover with Shadow
+                                          Expanded(
+                                            flex: 4,
+                                            child: Container(
+                                              margin: EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(12),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: secondaryColor.withOpacity(0.3),
+                                                    spreadRadius: 2,
+                                                    blurRadius: 8,
+                                                    offset: Offset(0, 4),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(12),
+                                                child: Image.network(
+                                                  bookCoverUrl,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (context, error, stackTrace) {
+                                                    return Container(
+                                                      color: subtleBackgroundColor,
+                                                      child: Icon(Icons.book, color: secondaryColor),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
+                                          // Book Information
+                                          Expanded(
+                                            flex: 2,
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Column(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    book['bookTitle'],
+                                                    maxLines: 2,
+                                                    overflow: TextOverflow.ellipsis,
+                                                    style: TextStyle(
+                                                      color: textDarkColor,
+                                                      fontSize: 14,
+                                                      fontWeight: FontWeight.bold,
+                                                      fontFamily: 'Sedan',
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 4),
+                                                  Text(
+                                                    book['author'] ?? "Unknown Author",
+                                                    style: TextStyle(
+                                                      color: textDarkColor.withOpacity(0.7),
+                                                      fontSize: 12,
+                                                      fontFamily: 'Dosis',
+                                                    ),
+                                                  ),
+                                                  SizedBox(height: 4),
+                                                  // Rating Stars
+                                                  Row(
+                                                    children: List.generate(5, (index) {
+                                                      return Icon(
+                                                        Icons.star,
+                                                        size: 14,
+                                                        color: index < (book['rating'] ?? 4)
+                                                            ? warmAccentColor
+                                                            : warmAccentColor.withOpacity(0.3),
+                                                      );
+                                                    }),
+                                                  ),
+                                                  // Category Tag
+                                                  Container(
+                                                    margin: EdgeInsets.only(top: 4),
+                                                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                    decoration: BoxDecoration(
+                                                      color: accentColor.withOpacity(0.2),
+                                                      borderRadius: BorderRadius.circular(12),
+                                                    ),
+                                                    child: Text(
+                                                      book['genre'] ?? 'Fiction',
+                                                      style: TextStyle(
+                                                        color: secondaryColor,
+                                                        fontSize: 10,
+                                                        fontWeight: FontWeight.w500,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        book['bookTitle'],
-                                        style: const TextStyle(
-                                          color: Color.fromARGB(255, 0, 21, 44),
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          fontFamily: 'Sedan',
-                                        ),
-                                      ),
-                                      Text(
-                                        book['author'] ?? "Unknown Author",
-                                        style: const TextStyle(
-                                          color: Color.fromARGB(255, 0, 21, 44),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.normal,
-                                          fontFamily: 'Dosis',
-                                        ),
-                                      ),
-                                    ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -504,24 +637,18 @@ class _ELibState extends State<ELib> {
         activeIndex: _calculateSelectedIndex(context),
         itemCount: icons.length,
         tabBuilder: (int index, bool isActive) {
-          return GestureDetector(
-            onTap: () {
-              _onItemTapped(index, context);
-            },
-            child: Icon(
-              icons[index],
-              size: 24,
-              color: isActive
-                  ? Colors.amberAccent
-                  : const Color.fromARGB(255, 100, 204, 199),
-            ),
+          return Icon(
+            icons[index],
+            size: 24,
+            color: isActive
+                ? warmAccentColor
+                : accentColor,
           );
         },
-        gapLocation: GapLocation.center,
-        notchSmoothness: NotchSmoothness.verySmoothEdge,
+        gapLocation: GapLocation.none,
         leftCornerRadius: 8,
         rightCornerRadius: 8,
-        backgroundColor: const Color.fromARGB(255, 17, 106, 136),
+        backgroundColor: secondaryColor,
         onTap: (index) => _onItemTapped(index, context),
       ),
     );
